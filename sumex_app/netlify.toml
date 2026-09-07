@@ -1,0 +1,25 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[functions]
+  directory = "netlify/functions"
+
+[[scheduled-functions]]
+  name = "fetch-market-data"
+  schedule = "*/15 * * * *"
+
+[[scheduled-functions]]
+  name = "fetch-etf-flows"
+  schedule = "0 14,18,22 * * 1-5"
+
+[[scheduled-functions]]
+  name = "fetch-macro-events"
+  schedule = "0 6,12,18 * * 1-5"
+
+[[scheduled-functions]]
+  name = "detect-signals"
+  schedule = "*/30 * * * *"

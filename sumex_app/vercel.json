@@ -1,0 +1,24 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/fetch-market-data",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/signals/scan",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/fetch-news",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/fetch-etf-flows",
+      "schedule": "0 14,18,22 * * 1-5"
+    },
+    {
+      "path": "/api/cron/fetch-macro-events",
+      "schedule": "0 7,13,19 * * 1-5"
+    }
+  ]
+}
