@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createServiceClient } from '@/lib/supabase/server'
+import { createServiceClient, createClient } from '@/lib/supabase/server'
 import { fetchMarketData, fetchGlobalMetrics, DEFAULT_COINGECKO_IDS } from '@/lib/sources/coingecko'
 import { runSignalScan } from '@/lib/signals/engine'
 
@@ -18,15 +18,23 @@ async function handleMarketDataSync(request: Request) {
   const secret = searchParams.get('secret')
   const authHeader = request.headers.get('authorization')
 
-  // Simple auth check for cron invocation
+  // Simple auth check for cron invocation or authenticated user session
   if (
     process.env.CRON_SECRET &&
     secret !== process.env.CRON_SECRET &&
     authHeader !== `Bearer ${process.env.CRON_SECRET}`
   ) {
-    // Allow unauthenticated in local development for quick testing
-    if (process.env.NODE_ENV === 'production') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // Check if an authenticated user is triggering this from the app
+    try {
+      const authClient = await createClient()
+      const { data: { user } } = await authClient.auth.getUser()
+      if (!user && process.env.NODE_ENV === 'production') {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+    } catch {
+      if (process.env.NODE_ENV === 'production') {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
     }
   }
 

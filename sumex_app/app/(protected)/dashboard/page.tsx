@@ -24,6 +24,7 @@ import {
   ArrowDownRight,
 } from 'lucide-react'
 import DashboardQuickActions from './DashboardQuickActions'
+import CryptoIcon from '@/app/components/CryptoIcon'
 
 export const dynamic = 'force-dynamic'
 
@@ -170,61 +171,170 @@ export default async function DashboardPage() {
             bg: 'rgba(35,247,221,0.08)',
             label: sym,
           }
+          const up1h = (snap?.change_1h ?? 0) >= 0
+          const up24 = (snap?.change_24h ?? 0) >= 0
+          const up7d = (snap?.change_7d ?? 0) >= 0
+
           return (
-            <div key={sym} className="metric-tile" style={{ gap: '10px' }}>
+            <div
+              key={sym}
+              className="metric-tile"
+              style={{
+                gap: '12px',
+                borderColor: `${style.color}25`,
+                background: `linear-gradient(180deg, rgba(20,24,33,0.85) 0%, ${style.bg} 100%)`,
+                transition: 'transform 0.15s ease, border-color 0.15s ease',
+              }}
+            >
+              {/* Card Header: Official Coin Logo, Name, & Labeled 24h Delta */}
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div
-                    style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: '50%',
-                      background: style.bg,
-                      border: `1px solid ${style.color}30`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '0.82rem',
-                      fontWeight: 800,
-                      color: style.color,
-                    }}
-                  >
-                    {sym}
-                  </div>
+                <div className="flex items-center gap-3">
+                  <CryptoIcon symbol={sym} name={style.label} size={36} />
                   <div>
-                    <div className="metric-label">
+                    <div className="metric-label" style={{ fontWeight: 700, fontSize: '0.92rem' }}>
                       {style.label}
                     </div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                      {sym} / USD
+                    <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                      {sym} / USD · Spot
                     </div>
                   </div>
                 </div>
-                <PctBadge value={snap?.change_24h ?? null} />
+
+                <div className="flex flex-col items-end">
+                  <span
+                    className={`badge ${up24 ? 'badge-green' : 'badge-red'}`}
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      letterSpacing: 0,
+                      fontWeight: 700,
+                      padding: '3px 8px',
+                      fontSize: '0.78rem',
+                    }}
+                  >
+                    {up24 ? '▲ +' : '▼ '}{Math.abs(snap?.change_24h ?? 0).toFixed(2)}%
+                  </span>
+                  <span
+                    style={{
+                      fontSize: '0.65rem',
+                      color: 'var(--text-muted)',
+                      marginTop: 3,
+                      fontWeight: 600,
+                      letterSpacing: '0.04em',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    24h Change
+                  </span>
+                </div>
               </div>
-              <div className="metric-value" style={{ fontSize: '1.65rem', lineHeight: 1.1 }}>
+
+              {/* Live Spot Price */}
+              <div className="metric-value" style={{ fontSize: '1.75rem', lineHeight: 1.1, margin: '2px 0' }}>
                 {formatPrice(snap?.price_usd)}
               </div>
-              <div className="flex-col gap-1 mt-1">
-                <ChangeRow label="1h" value={snap?.change_1h ?? null} />
-                <ChangeRow label="7d" value={snap?.change_7d ?? null} />
+
+              {/* Timeframe Performance Breakdown (1h, 24h, 7d Clearly Labeled) */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr 1fr',
+                  gap: 6,
+                  padding: '8px 10px',
+                  borderRadius: 8,
+                  background: 'rgba(0,0,0,0.28)',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                }}
+              >
+                <div className="flex-col">
+                  <span
+                    style={{
+                      fontSize: '0.68rem',
+                      color: 'var(--text-muted)',
+                      fontWeight: 600,
+                      letterSpacing: '0.04em',
+                    }}
+                  >
+                    1H CHANGE
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      color: up1h ? 'var(--green)' : 'var(--red)',
+                      marginTop: 2,
+                    }}
+                  >
+                    {snap?.change_1h != null ? `${up1h ? '+' : ''}${snap.change_1h.toFixed(2)}%` : '—'}
+                  </span>
+                </div>
+
+                <div className="flex-col">
+                  <span
+                    style={{
+                      fontSize: '0.68rem',
+                      color: 'var(--text-muted)',
+                      fontWeight: 600,
+                      letterSpacing: '0.04em',
+                    }}
+                  >
+                    24H CHANGE
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      color: up24 ? 'var(--green)' : 'var(--red)',
+                      marginTop: 2,
+                    }}
+                  >
+                    {snap?.change_24h != null ? `${up24 ? '+' : ''}${snap.change_24h.toFixed(2)}%` : '—'}
+                  </span>
+                </div>
+
+                <div className="flex-col">
+                  <span
+                    style={{
+                      fontSize: '0.68rem',
+                      color: 'var(--text-muted)',
+                      fontWeight: 600,
+                      letterSpacing: '0.04em',
+                    }}
+                  >
+                    7D CHANGE
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      color: up7d ? 'var(--green)' : 'var(--red)',
+                      marginTop: 2,
+                    }}
+                  >
+                    {snap?.change_7d != null ? `${up7d ? '+' : ''}${snap.change_7d.toFixed(2)}%` : '—'}
+                  </span>
+                </div>
               </div>
+
+              {/* Market Cap & 24h Volume Footer */}
               <div
                 className="flex items-center justify-between"
                 style={{
                   paddingTop: 8,
-                  borderTop: '1px solid rgba(35,247,221,0.07)',
-                  fontSize: '0.82rem',
+                  borderTop: '1px solid rgba(255,255,255,0.06)',
+                  fontSize: '0.8rem',
                 }}
               >
                 <span style={{ color: 'var(--text-muted)' }}>
-                  Cap&nbsp;
+                  Market Cap:&nbsp;
                   <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>
                     {formatLargeNumber(snap?.market_cap_usd)}
                   </span>
                 </span>
                 <span style={{ color: 'var(--text-muted)' }}>
-                  Vol&nbsp;
+                  24h Vol:&nbsp;
                   <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>
                     {formatLargeNumber(snap?.volume_24h_usd)}
                   </span>

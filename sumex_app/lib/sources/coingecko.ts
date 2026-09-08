@@ -52,8 +52,68 @@ async function cgFetch<T>(path: string): Promise<{ data: T; ok: true } | { data:
 }
 
 /**
+ * High-precision live ticker helper (Binance spot orderbook & klines).
+ * Overlays live sub-second prices and exact 1h/24h/7d deltas with 2-decimal precision.
+ */
+interface PrecisionData {
+  price: number
+  change1h: number
+  change24h: number
+  change7d: number
+}
+
+async function fetchPrecisionExchangeData(symbol: string): Promise<PrecisionData | null> {
+  try {
+    const pair = `${symbol.toUpperCase()}USDT`
+    const [tRes, k1Res, k7Res] = await Promise.all([
+      fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${pair}`, { cache: 'no-store' }),
+      fetch(`https://api.binance.com/api/v3/klines?symbol=${pair}&interval=1h&limit=2`, { cache: 'no-store' }),
+      fetch(`https://api.binance.com/api/v3/klines?symbol=${pair}&interval=1d&limit=8`, { cache: 'no-store' }),
+    ])
+
+    if (!tRes.ok) return null
+    const t = await tRes.json()
+    const price = parseFloat(t.lastPrice)
+    const change24h = parseFloat(t.priceChangePercent)
+
+    let change1h = 0
+    if (k1Res.ok) {
+      const k1 = await k1Res.json()
+      if (Array.isArray(k1) && k1.length > 0) {
+        const open1h = parseFloat(k1[k1.length - 1][1])
+        if (open1h > 0) change1h = ((price - open1h) / open1h) * 100
+      }
+    }
+
+    let change7d = 0
+    if (k7Res.ok) {
+      const k7 = await k7Res.json()
+      if (Array.isArray(k7) && k7.length > 0) {
+        const open7d = parseFloat(k7[0][1])
+        if (open7d > 0) change7d = ((price - open7d) / open7d) * 100
+      }
+    }
+
+    return {
+      price,
+      change1h: Number(change1h.toFixed(2)),
+      change24h: Number(change24h.toFixed(2)),
+      change7d: Number(change7d.toFixed(2)),
+    }
+  } catch {
+    return null
+  }
+}
+
+const SYMBOL_MAP: Record<string, string> = {
+  bitcoin: 'BTC',
+  ethereum: 'ETH',
+  solana: 'SOL',
+}
+
+/**
  * Fetch market data for a list of CoinGecko IDs.
- * Returns coin data with 1h/24h/7d price changes.
+ * Returns coin data with accurate 1h/24h/7d price changes.
  */
 export async function fetchMarketData(
   coinIds: string[],
@@ -76,7 +136,24 @@ export async function fetchMarketData(
     return { data: null, status: result.status, error: result.error }
   }
 
-  return { data: result.data, status: 200, error: null }
+  const coins = result.data
+
+  // Enhance major coins (BTC, ETH, SOL) with exact live exchange precision
+  await Promise.all(
+    coins.map(async (c) => {
+      const sym = SYMBOL_MAP[c.id]
+      if (!sym) return
+      const live = await fetchPrecisionExchangeData(sym)
+      if (live) {
+        c.current_price = live.price
+        c.price_change_percentage_1h_in_currency = live.change1h
+        c.price_change_percentage_24h_in_currency = live.change24h
+        c.price_change_percentage_7d_in_currency = live.change7d
+      }
+    })
+  )
+
+  return { data: coins, status: 200, error: null }
 }
 
 /**

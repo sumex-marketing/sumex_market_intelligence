@@ -25,6 +25,7 @@ import {
   formatDominance,
   formatRelativeTime,
 } from '@/lib/utils'
+import CryptoIcon from '@/app/components/CryptoIcon'
 
 interface MarketDeskProps {
   snapshots: any[]
@@ -174,24 +175,8 @@ export default function MarketDeskWorkspace({
               }}
             >
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div
-                    style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: 10,
-                      background: theme.bg,
-                      border: `1px solid ${theme.color}40`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontWeight: 800,
-                      fontSize: '0.8rem',
-                      color: theme.color,
-                    }}
-                  >
-                    {sym}
-                  </div>
+                <div className="flex items-center gap-3">
+                  <CryptoIcon symbol={sym} name={theme.label} size={36} />
                   <div>
                     <div className="font-bold text-primary" style={{ fontSize: '0.95rem' }}>
                       {theme.label}
@@ -199,13 +184,18 @@ export default function MarketDeskWorkspace({
                     <div className="text-muted text-xs">{sym} · Spot USD</div>
                   </div>
                 </div>
-                <span
-                  className={`badge ${up24 ? 'badge-green' : 'badge-red'}`}
-                  style={{ fontFamily: 'var(--font-mono)', fontWeight: 700 }}
-                >
-                  {up24 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
-                  {Math.abs(snap?.change_24h ?? 0).toFixed(2)}%
-                </span>
+                <div className="flex flex-col items-end">
+                  <span
+                    className={`badge ${up24 ? 'badge-green' : 'badge-red'}`}
+                    style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, padding: '3px 8px', fontSize: '0.78rem' }}
+                  >
+                    {up24 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+                    {up24 ? '+' : ''}{(snap?.change_24h ?? 0).toFixed(2)}%
+                  </span>
+                  <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: 3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    24h Change
+                  </span>
+                </div>
               </div>
 
               <div className="metric-value" style={{ fontSize: '1.85rem', lineHeight: 1 }}>
@@ -434,19 +424,23 @@ export default function MarketDeskWorkspace({
                 return (
                   <tr key={s.symbol}>
                     <td>
-                      <div className="flex items-center gap-2">
-                        <span
-                          className="font-bold font-mono"
-                          style={{
-                            color: ASSET_THEMES[s.symbol]?.color ?? '#23F7DD',
-                            fontSize: '0.9rem',
-                          }}
-                        >
-                          {s.symbol}
-                        </span>
-                        <span className="text-xs text-muted">
-                          {s.name ?? ASSET_THEMES[s.symbol]?.label ?? s.symbol}
-                        </span>
+                      <div className="flex items-center gap-2.5">
+                        <CryptoIcon symbol={s.symbol} name={s.name} size={24} />
+                        <div>
+                          <div
+                            className="font-bold font-mono"
+                            style={{
+                              color: ASSET_THEMES[s.symbol]?.color ?? '#23F7DD',
+                              fontSize: '0.88rem',
+                              lineHeight: 1.2,
+                            }}
+                          >
+                            {s.symbol}
+                          </div>
+                          <div className="text-xs text-muted" style={{ fontSize: '0.72rem' }}>
+                            {s.name ?? ASSET_THEMES[s.symbol]?.label ?? s.symbol}
+                          </div>
+                        </div>
                       </div>
                     </td>
                     <td className="td-mono font-bold text-primary">
