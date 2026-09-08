@@ -1,0 +1,9 @@
+[build]
+  base = "sumex_app"
+  command = "npm run build"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[functions]
+  directory = "sumex_app/netlify/functions"
