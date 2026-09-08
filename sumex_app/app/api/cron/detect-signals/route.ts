@@ -438,6 +438,19 @@ async function handleDetection(request: Request) {
         .eq('id', job.id)
     }
 
+    // Update source health for Sumex Signal Engine
+    const now = new Date().toISOString()
+    await supabase
+      .from('sources')
+      .update({
+        last_success_at: now,
+        last_http_status: 200,
+        records_received: allDetected.length,
+        data_timestamp: now,
+        error_message: null,
+      })
+      .eq('name', 'Sumex Signal Engine')
+
     return NextResponse.json({
       success: true,
       detected: allDetected.length,

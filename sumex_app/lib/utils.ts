@@ -188,19 +188,49 @@ export function getSignalScoreBadge(score: number | null | undefined): {
   scoreText: string
   color: string
   bg: string
+  description: string
+  level: 'critical' | 'high' | 'moderate' | 'low'
 } {
   const num = score != null ? score : 5.0
   const scoreText = `${num.toFixed(1)}/10`
   if (num >= 7.5) {
-    return { label: 'Critical Anomaly', scoreText, color: '#f87171', bg: 'rgba(239,68,68,0.16)' }
+    return {
+      label: 'Critical Anomaly',
+      scoreText,
+      color: '#f87171',
+      bg: 'rgba(239,68,68,0.16)',
+      description: 'Urgent dislocation / major catalyst (Score 7.5 - 10.0)',
+      level: 'critical',
+    }
   }
   if (num >= 6.0) {
-    return { label: 'High Significance', scoreText, color: '#fbbf24', bg: 'rgba(245,158,11,0.16)' }
+    return {
+      label: 'High Significance',
+      scoreText,
+      color: '#fbbf24',
+      bg: 'rgba(245,158,11,0.16)',
+      description: 'High market impact / confirmed move (Score 6.0 - 7.4)',
+      level: 'high',
+    }
   }
   if (num >= 4.0) {
-    return { label: 'Moderate Signal', scoreText, color: '#23F7DD', bg: 'rgba(35,247,221,0.14)' }
+    return {
+      label: 'Moderate Signal',
+      scoreText,
+      color: '#23F7DD',
+      bg: 'rgba(35,247,221,0.14)',
+      description: 'Standard volatility threshold trigger (Score 4.0 - 5.9)',
+      level: 'moderate',
+    }
   }
-  return { label: 'Low Alert', scoreText, color: '#94a3b8', bg: 'rgba(148,163,184,0.12)' }
+  return {
+    label: 'Low Alert',
+    scoreText,
+    color: '#94a3b8',
+    bg: 'rgba(148,163,184,0.12)',
+    description: 'Routine market activity / noise (Score < 4.0)',
+    level: 'low',
+  }
 }
 
 export function formatSignalStatus(status: string | null | undefined): { label: string; color: string; bg: string } {

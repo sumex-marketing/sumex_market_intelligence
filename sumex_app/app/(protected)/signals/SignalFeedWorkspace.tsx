@@ -327,6 +327,34 @@ export default function SignalFeedWorkspace({
               className="card p-0"
               style={{ overflow: 'hidden', borderRadius: 'var(--radius-lg)' }}
             >
+              {/* Score Explanation Legend Bar */}
+              <div
+                className="flex items-center justify-between flex-wrap gap-2 px-4 py-2 border-b border-subtle"
+                style={{ background: 'rgba(15, 23, 42, 0.65)', fontSize: '0.72rem' }}
+              >
+                <span className="text-muted font-medium">
+                  Priority Score Guide (0.0 to 10.0 scale):
+                </span>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className="flex items-center gap-1 font-semibold" style={{ color: '#f87171' }}>
+                    <span className="w-2 h-2 rounded-full" style={{ background: '#f87171' }} />
+                    7.5 - 10.0 Critical Anomaly
+                  </span>
+                  <span className="flex items-center gap-1 font-semibold" style={{ color: '#fbbf24' }}>
+                    <span className="w-2 h-2 rounded-full" style={{ background: '#fbbf24' }} />
+                    6.0 - 7.4 High Significance
+                  </span>
+                  <span className="flex items-center gap-1 font-semibold" style={{ color: '#23F7DD' }}>
+                    <span className="w-2 h-2 rounded-full" style={{ background: '#23F7DD' }} />
+                    4.0 - 5.9 Moderate Signal
+                  </span>
+                  <span className="flex items-center gap-1 font-semibold" style={{ color: '#94a3b8' }}>
+                    <span className="w-2 h-2 rounded-full" style={{ background: '#94a3b8' }} />
+                    &lt; 4.0 Low Alert
+                  </span>
+                </div>
+              </div>
+
               <div
                 style={{
                   overflowX: 'auto',
@@ -344,8 +372,8 @@ export default function SignalFeedWorkspace({
                   }}
                 >
                   <colgroup>
-                    <col style={{ width: '65px' }} />
-                    <col style={{ width: '22%' }} />
+                    <col style={{ width: '130px' }} />
+                    <col style={{ width: '20%' }} />
                     <col style={{ width: '14%' }} />
                     <col style={{ width: '10%' }} />
                     <col style={{ width: '13%' }} />
@@ -355,7 +383,9 @@ export default function SignalFeedWorkspace({
                   </colgroup>
                   <thead>
                     <tr>
-                      <th style={{ whiteSpace: 'nowrap' }}>Score</th>
+                      <th style={{ whiteSpace: 'nowrap' }} title="Algorithmic Priority Score from 0.0 (low noise) to 10.0 (critical anomaly)">
+                        Priority (0-10)
+                      </th>
                       <th>Signal / Subject</th>
                       <th style={{ whiteSpace: 'nowrap' }}>Type</th>
                       <th style={{ whiteSpace: 'nowrap' }}>Severity</th>
@@ -379,28 +409,39 @@ export default function SignalFeedWorkspace({
                       const sevStyle = severityColors[sig.severity] ?? severityColors.medium
                       return (
                       <tr key={sig.id}>
-                        {/* Score badge */}
-                        <td style={{ overflow: 'hidden' }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                        {/* Priority Score badge with full text */}
+                        <td>
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
                             <div
                               style={{
-                                width: 36,
-                                height: 36,
-                                borderRadius: 8,
+                                padding: '3px 8px',
+                                borderRadius: 7,
                                 display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
+                                alignItems: 'baseline',
+                                gap: 2,
                                 fontFamily: 'var(--font-mono)',
                                 fontWeight: 800,
-                                fontSize: '0.88rem',
+                                fontSize: '0.9rem',
                                 background: scoreBadge.bg,
                                 color: scoreBadge.color,
-                                border: `1px solid ${scoreBadge.color}33`,
+                                border: `1px solid ${scoreBadge.color}45`,
                               }}
+                              title={`Priority Score: ${sig.score ? sig.score.toFixed(1) : 'N/A'} / 10 - ${scoreBadge.description}`}
                             >
-                              {sig.score ? sig.score.toFixed(1) : 'N/A'}
+                              <span>{sig.score ? sig.score.toFixed(1) : 'N/A'}</span>
+                              <span style={{ fontSize: '0.62rem', opacity: 0.75, fontWeight: 600 }}>/10</span>
                             </div>
-                            <div style={{ fontSize: '0.62rem', color: scoreBadge.color, fontWeight: 600, textAlign: 'center', lineHeight: 1.1, maxWidth: 54, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            <div
+                              style={{
+                                fontSize: '0.68rem',
+                                color: scoreBadge.color,
+                                fontWeight: 700,
+                                textAlign: 'center',
+                                lineHeight: 1.15,
+                                whiteSpace: 'nowrap',
+                              }}
+                              title={scoreBadge.description}
+                            >
                               {scoreBadge.label}
                             </div>
                           </div>

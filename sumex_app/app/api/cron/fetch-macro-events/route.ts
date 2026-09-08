@@ -99,6 +99,18 @@ async function handleMacroSync(request: Request) {
         .eq('id', job.id)
     }
 
+    // Update source health for ForexFactory Macro
+    await supabase
+      .from('sources')
+      .update({
+        last_success_at: now,
+        last_http_status: 200,
+        records_received: upserted,
+        data_timestamp: now,
+        error_message: null,
+      })
+      .eq('name', 'ForexFactory Macro')
+
     // Fire-and-forget: trigger signal detection after fresh macro data lands
     const baseUrl = new URL(request.url).origin
     const cronSecret = process.env.CRON_SECRET ? `?secret=${process.env.CRON_SECRET}` : ''

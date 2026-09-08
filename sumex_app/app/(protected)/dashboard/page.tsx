@@ -569,37 +569,48 @@ export default async function DashboardPage() {
                         idx < signals.length - 1 ? '1px solid var(--border-subtle)' : 'none',
                     }}
                   >
-                    {/* Score pill */}
+                    {/* Priority Score pill */}
                     <div
                       style={{
-                        width: 42,
-                        minWidth: 42,
+                        width: 78,
+                        minWidth: 78,
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
                         gap: 3,
                         flexShrink: 0,
                       }}
+                      title={`Priority Score: ${sig.score ? sig.score.toFixed(1) : 'N/A'} / 10 - ${scoreBadge.description}`}
                     >
                       <div
                         style={{
-                          width: 38,
-                          height: 38,
-                          borderRadius: 10,
+                          padding: '3px 8px',
+                          borderRadius: 7,
                           display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
+                          alignItems: 'baseline',
+                          gap: 2,
                           fontFamily: 'var(--font-mono)',
                           fontWeight: 800,
-                          fontSize: '0.85rem',
+                          fontSize: '0.88rem',
                           background: scoreBadge.bg,
                           color: scoreBadge.color,
-                          border: `1px solid ${scoreBadge.color}40`,
+                          border: `1px solid ${scoreBadge.color}45`,
                         }}
                       >
-                        {sig.score ? sig.score.toFixed(1) : 'N/A'}
+                        <span>{sig.score ? sig.score.toFixed(1) : 'N/A'}</span>
+                        <span style={{ fontSize: '0.62rem', opacity: 0.75, fontWeight: 600 }}>/10</span>
                       </div>
-                      <div style={{ fontSize: '0.58rem', color: scoreBadge.color, fontWeight: 700, textAlign: 'center', lineHeight: 1.1, maxWidth: 42, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div
+                        style={{
+                          fontSize: '0.66rem',
+                          color: scoreBadge.color,
+                          fontWeight: 700,
+                          textAlign: 'center',
+                          lineHeight: 1.15,
+                          whiteSpace: 'normal',
+                          maxWidth: 78,
+                        }}
+                      >
                         {scoreBadge.label}
                       </div>
                     </div>
@@ -841,6 +852,7 @@ export default async function DashboardPage() {
           {/* Data Feed Health */}
           <div className="card flex-col gap-0" style={{ padding: 0, overflow: 'hidden' }}>
             <div
+              className="flex items-center justify-between"
               style={{
                 padding: '14px 18px',
                 borderBottom: '1px solid var(--border-subtle)',
@@ -853,42 +865,89 @@ export default async function DashboardPage() {
                   Data Feed Health
                 </span>
               </div>
+              <Link
+                href="/settings"
+                className="btn btn-ghost btn-sm"
+                style={{ color: '#23F7DD', fontSize: '0.78rem', padding: '2px 8px' }}
+                title="Manage data sources in settings"
+              >
+                Configure →
+              </Link>
             </div>
             {sources.length === 0 ? (
-              <div style={{ padding: '16px 18px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                No sources configured.
+              <div style={{ padding: '18px', fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center' }}>
+                No ingestion sources configured.
               </div>
             ) : (
-              sources.map((src: any, idx: number) => (
-                <div
-                  key={src.id}
-                  className="flex items-center justify-between"
-                  style={{
-                    padding: '11px 18px',
-                    fontSize: '0.8rem',
-                    borderBottom:
-                      idx < sources.length - 1 ? '1px solid var(--border-subtle)' : 'none',
-                  }}
-                >
-                  <div className="flex items-center gap-2">
-                    <Circle
-                      size={7}
-                      fill={
-                        src.health_status === 'healthy'
-                          ? '#22c55e'
-                          : src.health_status === 'stale'
-                          ? '#eab308'
-                          : '#ef4444'
-                      }
-                      color="transparent"
-                    />
-                    <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>
-                      {src.name}
+              sources.map((src: any, idx: number) => {
+                const isHealthy = src.health_status === 'healthy'
+                const isStale = src.health_status === 'stale'
+                const statusColor = isHealthy ? '#22c55e' : isStale ? '#eab308' : '#ef4444'
+                const typeLabel =
+                  src.type === 'market_data'
+                    ? 'API'
+                    : src.type === 'etf'
+                    ? 'ETF'
+                    : src.type === 'macro'
+                    ? 'Macro'
+                    : 'Engine'
+
+                const ageText =
+                  src.data_age_minutes != null
+                    ? src.data_age_minutes < 1
+                      ? 'Live (< 1m)'
+                      : `${Math.round(src.data_age_minutes)}m ago`
+                    : 'Active'
+
+                return (
+                  <div
+                    key={src.id}
+                    className="flex items-center justify-between"
+                    style={{
+                      padding: '12px 18px',
+                      fontSize: '0.8rem',
+                      borderBottom:
+                        idx < sources.length - 1 ? '1px solid var(--border-subtle)' : 'none',
+                    }}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span
+                        style={{
+                          width: '8px',
+                          height: '8px',
+                          borderRadius: '50%',
+                          backgroundColor: statusColor,
+                          boxShadow: `0 0 8px ${statusColor}`,
+                        }}
+                      />
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-1.5">
+                          <span style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: '0.82rem' }}>
+                            {src.name}
+                          </span>
+                          <span
+                            className="font-mono text-[10px] px-1.5 py-0.2 rounded"
+                            style={{
+                              background: 'rgba(255,255,255,0.06)',
+                              color: 'var(--text-muted)',
+                              border: '1px solid rgba(255,255,255,0.08)',
+                            }}
+                          >
+                            {typeLabel}
+                          </span>
+                        </div>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                          {ageText} {src.last_http_status ? `· ${src.last_http_status} OK` : ''}
+                        </span>
+                      </div>
+                    </div>
+
+                    <span className={`badge badge-${src.health_status}`}>
+                      {src.health_status}
                     </span>
                   </div>
-                  <span className={`badge badge-${src.health_status}`}>{src.health_status}</span>
-                </div>
-              ))
+                )
+              })
             )}
           </div>
         </div>

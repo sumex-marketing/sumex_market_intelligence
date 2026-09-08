@@ -77,6 +77,19 @@ async function handleEtfSync(request: Request) {
         .eq('id', job.id)
     }
 
+    // Update source health for Farside Investors
+    const now = new Date().toISOString()
+    await supabase
+      .from('sources')
+      .update({
+        last_success_at: now,
+        last_http_status: 200,
+        records_received: allFlows.length,
+        data_timestamp: now,
+        error_message: null,
+      })
+      .eq('name', 'Farside Investors')
+
     // Fire-and-forget: trigger signal detection after fresh ETF data lands
     const baseUrl = new URL(request.url).origin
     const cronSecret = process.env.CRON_SECRET ? `?secret=${process.env.CRON_SECRET}` : ''
