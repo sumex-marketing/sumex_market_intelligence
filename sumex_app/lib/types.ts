@@ -393,6 +393,7 @@ export interface CoinGeckoMarketData {
   market_cap: number
   market_cap_rank: number
   total_volume: number
+  price_change_percentage_24h?: number
   price_change_percentage_1h_in_currency: number
   price_change_percentage_24h_in_currency: number
   price_change_percentage_7d_in_currency: number

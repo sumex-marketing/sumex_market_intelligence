@@ -72,7 +72,7 @@ async function handleMarketDataSync(request: Request) {
       timestamp: now,
       price_usd: c.current_price,
       change_1h: c.price_change_percentage_1h_in_currency,
-      change_24h: c.price_change_percentage_24h_in_currency,
+      change_24h: c.price_change_percentage_24h_in_currency ?? c.price_change_percentage_24h,
       change_7d: c.price_change_percentage_7d_in_currency,
       market_cap_usd: c.market_cap,
       volume_24h_usd: c.total_volume,
