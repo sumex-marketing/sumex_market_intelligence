@@ -33,7 +33,7 @@ export const dynamic = 'force-dynamic'
 
 /* ── Inline badge helper ─────────────────────────────────── */
 function PctBadge({ value }: { value: number | null }) {
-  if (value == null) return <span className="badge badge-muted">—</span>
+  if (value == null) return <span className="badge badge-muted">N/A</span>
   const up = value >= 0
   return (
     <span
@@ -57,14 +57,14 @@ function ChangeRow({ label, value }: { label: string; value: number | null }) {
           fontWeight: 600,
         }}
       >
-        {value == null ? '—' : `${up ? '+' : ''}${value.toFixed(2)}%`}
+        {value == null ? 'N/A' : `${up ? '+' : ''}${value.toFixed(2)}%`}
       </span>
     </div>
   )
 }
 
 function formatFlow(usd: number | null) {
-  if (usd == null) return '—'
+  if (usd == null) return 'N/A'
   const abs = Math.abs(usd)
   const prefix = usd > 0 ? '+' : usd < 0 ? '-' : ''
   if (abs >= 1_000_000_000) return `${prefix}$${(abs / 1_000_000_000).toFixed(2)}B`
@@ -268,7 +268,7 @@ export default async function DashboardPage() {
                       marginTop: 2,
                     }}
                   >
-                    {snap?.change_1h != null ? `${up1h ? '+' : ''}${snap.change_1h.toFixed(2)}%` : '—'}
+                    {snap?.change_1h != null ? `${up1h ? '+' : ''}${snap.change_1h.toFixed(2)}%` : 'N/A'}
                   </span>
                 </div>
 
@@ -292,7 +292,7 @@ export default async function DashboardPage() {
                       marginTop: 2,
                     }}
                   >
-                    {snap?.change_24h != null ? `${up24 ? '+' : ''}${snap.change_24h.toFixed(2)}%` : '—'}
+                    {snap?.change_24h != null ? `${up24 ? '+' : ''}${snap.change_24h.toFixed(2)}%` : 'N/A'}
                   </span>
                 </div>
 
@@ -316,7 +316,7 @@ export default async function DashboardPage() {
                       marginTop: 2,
                     }}
                   >
-                    {snap?.change_7d != null ? `${up7d ? '+' : ''}${snap.change_7d.toFixed(2)}%` : '—'}
+                    {snap?.change_7d != null ? `${up7d ? '+' : ''}${snap.change_7d.toFixed(2)}%` : 'N/A'}
                   </span>
                 </div>
               </div>
@@ -597,7 +597,7 @@ export default async function DashboardPage() {
                           border: `1px solid ${scoreBadge.color}40`,
                         }}
                       >
-                        {sig.score ? sig.score.toFixed(1) : '—'}
+                        {sig.score ? sig.score.toFixed(1) : 'N/A'}
                       </div>
                       <div style={{ fontSize: '0.58rem', color: scoreBadge.color, fontWeight: 700, textAlign: 'center', lineHeight: 1.1, maxWidth: 42, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {scoreBadge.label}

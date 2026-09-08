@@ -224,7 +224,7 @@ export default function MarketDeskWorkspace({
                       color: up1h ? 'var(--green)' : 'var(--red)',
                     }}
                   >
-                    {snap?.change_1h != null ? `${up1h ? '+' : ''}${snap.change_1h.toFixed(2)}%` : '—'}
+                    {snap?.change_1h != null ? `${up1h ? '+' : ''}${snap.change_1h.toFixed(2)}%` : 'N/A'}
                   </div>
                 </div>
                 <div>
@@ -237,7 +237,7 @@ export default function MarketDeskWorkspace({
                       color: up24 ? 'var(--green)' : 'var(--red)',
                     }}
                   >
-                    {snap?.change_24h != null ? `${up24 ? '+' : ''}${snap.change_24h.toFixed(2)}%` : '—'}
+                    {snap?.change_24h != null ? `${up24 ? '+' : ''}${snap.change_24h.toFixed(2)}%` : 'N/A'}
                   </div>
                 </div>
                 <div>
@@ -250,7 +250,7 @@ export default function MarketDeskWorkspace({
                       color: up7d ? 'var(--green)' : 'var(--red)',
                     }}
                   >
-                    {snap?.change_7d != null ? `${up7d ? '+' : ''}${snap.change_7d.toFixed(2)}%` : '—'}
+                    {snap?.change_7d != null ? `${up7d ? '+' : ''}${snap.change_7d.toFixed(2)}%` : 'N/A'}
                   </div>
                 </div>
               </div>
@@ -448,7 +448,7 @@ export default function MarketDeskWorkspace({
                     </td>
                     <td className="td-mono">
                       <span style={{ color: up1h ? 'var(--green)' : 'var(--red)', fontWeight: 600 }}>
-                        {s.change_1h != null ? `${up1h ? '+' : ''}${s.change_1h.toFixed(2)}%` : '—'}
+                        {s.change_1h != null ? `${up1h ? '+' : ''}${s.change_1h.toFixed(2)}%` : 'N/A'}
                       </span>
                     </td>
                     <td className="td-mono">
@@ -456,12 +456,12 @@ export default function MarketDeskWorkspace({
                         className={`badge ${up24 ? 'badge-green' : 'badge-red'}`}
                         style={{ fontFamily: 'var(--font-mono)' }}
                       >
-                        {s.change_24h != null ? `${up24 ? '+' : ''}${s.change_24h.toFixed(2)}%` : '—'}
+                        {s.change_24h != null ? `${up24 ? '+' : ''}${s.change_24h.toFixed(2)}%` : 'N/A'}
                       </span>
                     </td>
                     <td className="td-mono">
                       <span style={{ color: up7d ? 'var(--green)' : 'var(--red)', fontWeight: 600 }}>
-                        {s.change_7d != null ? `${up7d ? '+' : ''}${s.change_7d.toFixed(2)}%` : '—'}
+                        {s.change_7d != null ? `${up7d ? '+' : ''}${s.change_7d.toFixed(2)}%` : 'N/A'}
                       </span>
                     </td>
                     <td className="td-mono text-muted text-xs">
@@ -554,7 +554,7 @@ export default function MarketDeskWorkspace({
                       </td>
                       <td className="td-mono text-xs">
                         <span style={{ color: up ? 'var(--green)' : 'var(--red)', fontWeight: 600 }}>
-                          {delta != null ? `${up ? '+' : ''}${delta.toFixed(2)}%` : '—'}
+                          {delta != null ? `${up ? '+' : ''}${delta.toFixed(2)}%` : 'N/A'}
                         </span>
                       </td>
                       <td className="td-mono text-muted text-xs">

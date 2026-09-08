@@ -36,8 +36,8 @@ interface MacroCalendarWorkspaceProps {
 }
 
 function formatFlow(usd: number | null, allowDashForZero = false) {
-  if (usd == null) return '—'
-  if (usd === 0) return allowDashForZero ? '—' : '$0.0M'
+  if (usd == null) return 'N/A'
+  if (usd === 0) return allowDashForZero ? 'N/A' : '$0.0M'
   const abs = Math.abs(usd)
   const prefix = usd > 0 ? '+' : usd < 0 ? '-' : ''
   if (abs >= 1_000_000_000) return `${prefix}$${(abs / 1_000_000_000).toFixed(2)}B`
@@ -312,8 +312,8 @@ export default function MacroCalendarWorkspace({
                         <td>
                           <span className={`badge badge-${ev.importance}`}>{ev.importance}</span>
                         </td>
-                        <td className="td-mono text-muted">{ev.previous ?? '—'}</td>
-                        <td className="td-mono text-muted">{ev.forecast ?? '—'}</td>
+                        <td className="td-mono text-muted">{ev.previous ?? 'N/A'}</td>
+                        <td className="td-mono text-muted">{ev.forecast ?? 'N/A'}</td>
                         <td className="td-mono font-bold" style={{ color: ev.actual ? '#23F7DD' : undefined }}>
                           {ev.actual ?? <span className="text-muted font-normal italic">Pending</span>}
                         </td>

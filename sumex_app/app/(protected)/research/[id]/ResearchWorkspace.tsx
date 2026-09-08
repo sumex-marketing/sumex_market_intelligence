@@ -412,7 +412,7 @@ export default function ResearchWorkspace({ card }: { card: ResearchCard }) {
                 onChange={(e) => setDraftFormat(e.target.value as ContentFormat)}
               >
                 {FORMAT_OPTIONS.map((f) => (
-                  <option key={f.value} value={f.value}>{f.label} — {f.desc}</option>
+                  <option key={f.value} value={f.value}>{f.label} - {f.desc}</option>
                 ))}
               </select>
             </div>

@@ -37,7 +37,7 @@ export default async function SignalDetailPage({
           <div>
             <div className="flex items-center gap-3 mb-2">
               <span className={`score-badge ${getScoreClass(signal.score)}`}>
-                {signal.score ? signal.score.toFixed(1) : '—'}
+                {signal.score ? signal.score.toFixed(1) : 'N/A'}
               </span>
               <span className={`badge badge-signal-${signal.status}`}>{signal.status}</span>
               <span className={`badge badge-${signal.severity}`}>{signal.severity} severity</span>
@@ -84,10 +84,10 @@ export default async function SignalDetailPage({
                   <tr key={ev.id}>
                     <td className="font-semibold text-primary">{ev.metric_name}</td>
                     <td className="td-mono font-bold text-amber">
-                      {ev.value != null ? ev.value.toLocaleString() : ev.value_text ?? '—'}
+                      {ev.value != null ? ev.value.toLocaleString() : ev.value_text ?? 'N/A'}
                     </td>
                     <td className="td-mono text-muted">
-                      {ev.comparison_value != null ? ev.comparison_value.toLocaleString() : '—'}
+                      {ev.comparison_value != null ? ev.comparison_value.toLocaleString() : 'N/A'}
                     </td>
                     <td>
                       <span className="badge badge-blue">{ev.evidence_type}</span>

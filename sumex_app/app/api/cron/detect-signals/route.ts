@@ -207,7 +207,7 @@ async function detectMacroSurprises(
       severity,
       score,
       trigger_detail: `${eventName} actual: ${ev.actual} vs forecast: ${ev.forecast} (${devStr} deviation)`,
-      evidence_summary: `Actual: ${ev.actual} | Forecast: ${ev.forecast} | Previous: ${ev.previous ?? '—'} | Deviation: ${devStr}`,
+      evidence_summary: `Actual: ${ev.actual} | Forecast: ${ev.forecast} | Previous: ${ev.previous ?? 'N/A'} | Deviation: ${devStr}`,
       verified_facts: [
         {
           fact: `${eventName} came in at ${ev.actual}, ${direction} the forecast of ${ev.forecast} by ${devStr}`,
@@ -272,9 +272,9 @@ async function detectPriceMoves(
 
     const direction = change >= 0 ? 'up' : 'down'
     const symbol = snap.symbol
-    const priceStr = snap.price_usd != null ? `$${snap.price_usd.toLocaleString('en-US', { maximumFractionDigits: snap.price_usd < 10 ? 4 : 2 })}` : '—'
+    const priceStr = snap.price_usd != null ? `$${snap.price_usd.toLocaleString('en-US', { maximumFractionDigits: snap.price_usd < 10 ? 4 : 2 })}` : 'N/A'
     const changeStr = `${change >= 0 ? '+' : ''}${change.toFixed(1)}%`
-    const title = `${symbol} ${direction === 'up' ? '📈' : '📉'} ${changeStr} in 24h — price at ${priceStr}`
+    const title = `${symbol} ${direction === 'up' ? 'up' : 'down'} ${changeStr} in 24h, price at ${priceStr}`
 
     signals.push({
       signal_type: 'price_move',
@@ -283,7 +283,7 @@ async function detectPriceMoves(
       severity,
       score,
       trigger_detail: `${symbol} moved ${changeStr} in the past 24h to ${priceStr}`,
-      evidence_summary: `24h change: ${changeStr} | 7d change: ${snap.change_7d != null ? `${snap.change_7d.toFixed(1)}%` : '—'} | Volume: ${snap.volume_24h_usd != null ? `$${(snap.volume_24h_usd / 1e9).toFixed(2)}B` : '—'}`,
+      evidence_summary: `24h change: ${changeStr} | 7d change: ${snap.change_7d != null ? `${snap.change_7d.toFixed(1)}%` : 'N/A'} | Volume: ${snap.volume_24h_usd != null ? `$${(snap.volume_24h_usd / 1e9).toFixed(2)}B` : 'N/A'}`,
       verified_facts: [
         {
           fact: `${symbol} price moved ${changeStr} in 24h to ${priceStr}`,

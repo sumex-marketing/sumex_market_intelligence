@@ -398,7 +398,7 @@ export default function SignalFeedWorkspace({
                                 border: `1px solid ${scoreBadge.color}33`,
                               }}
                             >
-                              {sig.score ? sig.score.toFixed(1) : '—'}
+                              {sig.score ? sig.score.toFixed(1) : 'N/A'}
                             </div>
                             <div style={{ fontSize: '0.62rem', color: scoreBadge.color, fontWeight: 600, textAlign: 'center', lineHeight: 1.1, maxWidth: 54, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                               {scoreBadge.label}
@@ -430,7 +430,7 @@ export default function SignalFeedWorkspace({
                           </div>
                         </td>
 
-                        {/* Signal type — human readable */}
+                        {/* Signal type - human readable */}
                         <td style={{ overflow: 'hidden' }}>
                           <span
                             style={{
@@ -468,7 +468,7 @@ export default function SignalFeedWorkspace({
                           </span>
                         </td>
 
-                        {/* Status — human readable */}
+                        {/* Status - human readable */}
                         <td style={{ overflow: 'hidden' }}>
                           <span
                             style={{

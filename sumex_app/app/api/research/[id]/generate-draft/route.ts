@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function fmtM(val: number | null | undefined): string {
-  if (val == null) return '—'
+  if (val == null) return 'N/A'
   const abs = Math.abs(val)
   const sign = val >= 0 ? '+' : '-'
   if (abs >= 1000) return `${sign}$${(abs / 1000).toFixed(2)}B`
@@ -49,9 +49,9 @@ function buildLiveContext(
     out += '| Event | Date | Forecast | Previous | Impact |\n'
     out += '|-------|------|----------|----------|--------|\n'
     for (const e of macroEvents.slice(0, 8)) {
-      const date = e.event_time_utc ? new Date(e.event_time_utc).toLocaleDateString('en-GB', { month: 'short', day: 'numeric' }) : '—'
-      const forecast = e.forecast_value != null ? e.forecast_value : '—'
-      const previous = e.previous_value != null ? e.previous_value : '—'
+      const date = e.event_time_utc ? new Date(e.event_time_utc).toLocaleDateString('en-GB', { month: 'short', day: 'numeric' }) : 'N/A'
+      const forecast = e.forecast_value != null ? e.forecast_value : 'N/A'
+      const previous = e.previous_value != null ? e.previous_value : 'N/A'
       const impact = e.importance ?? e.impact ?? 'medium'
       out += `| ${e.event_name ?? e.event_type} | ${date} | ${forecast} | ${previous} | ${impact.toUpperCase()} |\n`
     }
@@ -75,34 +75,34 @@ function buildPrompt(
     market_pulse: `Write a concise "Market Pulse" intelligence brief. Target ~200 words. Structure:
 1. **One-line hook** (what happened)
 2. **What it means** (2-3 sentences core insight)
-3. **Key data points** (bullet list of 3-5 verified facts — use the live ETF flow numbers where relevant)
+3. **Key data points** (bullet list of 3-5 verified facts - use the live ETF flow numbers where relevant)
 4. **Watch next** (1-2 sentences on what to monitor, referencing upcoming macro events)
 Use a sharp, institutional-analyst voice. No hype, just data-driven intelligence.`,
 
     why_it_moved: `Write a "Why It Moved" deep-dive explaining the catalyst chain. Target ~300 words. Structure:
-1. **The Move** (describe price/flow action — cite live ETF flow data)
-2. **Catalyst Chain** (what triggered what — macro → ETF → price)
+1. **The Move** (describe price/flow action - cite live ETF flow data)
+2. **Catalyst Chain** (what triggered what - macro to ETF to price)
 3. **Supporting Evidence** (cite the verified facts)
 4. **What bears watching** (invalidation conditions or follow-through signals, reference upcoming macro events)
 Analytical, structured, institutional voice.`,
 
     macro_to_crypto: `Write a "Macro to Crypto" briefing explaining how macro conditions are impacting crypto. Target ~250 words. Structure:
-1. **Macro Backdrop** (Fed, rates, DXY context — cite any relevant upcoming macro events)
-2. **Crypto Transmission** (how macro is flowing into crypto via ETF — use live flow numbers)
+1. **Macro Backdrop** (Fed, rates, DXY context - cite any relevant upcoming macro events)
+2. **Crypto Transmission** (how macro is flowing into crypto via ETF - use live flow numbers)
 3. **Key Signal** (this specific observation)
-4. **Forward Look** (next macro catalyst to watch — reference the macro calendar data)
+4. **Forward Look** (next macro catalyst to watch - reference the macro calendar data)
 Professional, cross-asset analyst voice.`,
 
     etf_watch: `Write an "ETF Watch" intelligence note focused on Bitcoin/Ethereum spot ETF flows. Target ~200 words. Structure:
-1. **Flow Headline** (net inflow/outflow summary — use live ETF flow data prominently)
+1. **Flow Headline** (net inflow/outflow summary - use live ETF flow data prominently)
 2. **Trend** (5-day flow trend from the live data)
 3. **Price Impact** (correlation to BTC price action)
 4. **What it signals** (institutional sentiment reading)
 Data-driven, use the live numbers throughout.`,
 
     week_ahead: `Write a "Week Ahead" macro preview. Target ~300 words. Structure:
-1. **Key Events This Week** (pull from the live macro calendar data — list specific events, dates, and forecasts)
-2. **Market Positioning** (where crypto markets are heading into the week — reference ETF flows)
+1. **Key Events This Week** (pull from the live macro calendar data - list specific events, dates, and forecasts)
+2. **Market Positioning** (where crypto markets are heading into the week - reference ETF flows)
 3. **Signals to Watch** (BTC/ETH levels, ETF flow momentum from live data)
 4. **Base Case** (most likely scenario)
 Forward-looking, preview format.`,
@@ -118,19 +118,19 @@ Forward-looking, preview format.`,
 **Asset:** ${signal?.subject ?? 'BTC'}
 **Signal Type:** ${signal?.signal_type ?? 'manual_catalyst'}
 **Severity:** ${signal?.severity ?? 'medium'}
-**Relevance Score:** ${signal?.score ?? '—'}/10
+**Relevance Score:** ${signal?.score ?? 'N/A'}/10
 **Trigger Detail:** ${signal?.trigger_detail ?? card.question ?? 'See observation below'}
 
 **Core Thesis:** ${thesis}
 
 **Verified Facts:**
-${facts || '• No specific facts logged yet'}
+${facts || '- No specific facts logged yet'}
 
 **Context News:**
-${news || '• No news items linked'}
+${news || '- No news items linked'}
 
 **AI Analysis Summary:** ${card.ai_analysis?.market_thesis ?? 'Not yet analyzed'}
-**Confidence:** ${card.confidence ?? '—'}/10
+**Confidence:** ${card.confidence ?? 'N/A'}/10
 ${liveContext}
 ## TASK
 
@@ -140,8 +140,9 @@ ${formatGuide}
 - Write ONLY the article body. No meta commentary.
 - Do not include "DRAFT" or "FOR INTERNAL USE" headers.
 - Use markdown formatting (##, **, bullet lists).
-- Start directly with the article hook — no preamble.
-- **IMPORTANT: Actively integrate the LIVE ETF FLOW DATA and MACRO EVENTS into your draft where relevant.** Reference actual flow numbers, dates, and event names — this is what makes Sumex intelligence unique.
+- Start directly with the article hook - no preamble.
+- **NEVER use em dashes (the character --) anywhere in your output. Use a regular hyphen (-) or rewrite the sentence instead.**
+- **IMPORTANT: Actively integrate the LIVE ETF FLOW DATA and MACRO EVENTS into your draft where relevant.** Reference actual flow numbers, dates, and event names - this is what makes Sumex intelligence unique.
 - Keep it concise and data-driven. Sumex intelligence is precise, not padded.
 `
 }
@@ -168,7 +169,7 @@ function generateStructuredFallback(
     : null
   const nextEvent = macroEvents[0]
   const macroSnippet = nextEvent
-    ? `- Upcoming: **${nextEvent.event_name ?? nextEvent.event_type}** — ${nextEvent.event_time_utc ? new Date(nextEvent.event_time_utc).toLocaleDateString('en-GB', { month: 'short', day: 'numeric' }) : 'TBD'}`
+    ? `- Upcoming: **${nextEvent.event_name ?? nextEvent.event_type}** - ${nextEvent.event_time_utc ? new Date(nextEvent.event_time_utc).toLocaleDateString('en-GB', { month: 'short', day: 'numeric' }) : 'TBD'}`
     : null
 
   const liveDataLines = [etfSnippet, macroSnippet].filter(Boolean).join('\n')
@@ -197,7 +198,7 @@ ${invalidation.length > 0
 
   return `## ${title}
 
-**Asset:** ${subject} | **Severity:** ${signal?.severity ?? 'medium'}
+**Asset:** ${subject} - **Severity:** ${signal?.severity ?? 'medium'}
 
 ${thesis}
 

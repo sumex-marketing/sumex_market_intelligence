@@ -6,7 +6,7 @@ import { ContentFormat, MacroImportance, SignalStatus, HealthStatus } from './ty
 // ============================================================
 
 export function formatPrice(value: number | null | undefined, decimals = 2): string {
-  if (value == null) return '—'
+  if (value == null) return 'N/A'
   if (value >= 1000) {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -24,7 +24,7 @@ export function formatPrice(value: number | null | undefined, decimals = 2): str
 }
 
 export function formatLargeNumber(value: number | null | undefined): string {
-  if (value == null) return '—'
+  if (value == null) return 'N/A'
   if (Math.abs(value) >= 1e12) return `$${(value / 1e12).toFixed(2)}T`
   if (Math.abs(value) >= 1e9)  return `$${(value / 1e9).toFixed(2)}B`
   if (Math.abs(value) >= 1e6)  return `$${(value / 1e6).toFixed(2)}M`
@@ -41,18 +41,18 @@ export function formatMarketCap(value: number | null | undefined): string {
 }
 
 export function formatPct(value: number | null | undefined, decimals = 2): string {
-  if (value == null) return '—'
+  if (value == null) return 'N/A'
   const sign = value > 0 ? '+' : ''
   return `${sign}${value.toFixed(decimals)}%`
 }
 
 export function formatDominance(value: number | null | undefined): string {
-  if (value == null) return '—'
+  if (value == null) return 'N/A'
   return `${value.toFixed(2)}%`
 }
 
 export function formatEtfFlow(value: number | null | undefined): string {
-  if (value == null) return '—'
+  if (value == null) return 'N/A'
   const abs = Math.abs(value)
   const sign = value >= 0 ? '+' : '-'
   if (abs >= 1e9) return `${sign}$${(abs / 1e9).toFixed(2)}B`
@@ -65,7 +65,7 @@ export function formatEtfFlow(value: number | null | undefined): string {
 // ============================================================
 
 export function formatTimestamp(value: string | null | undefined): string {
-  if (!value) return '—'
+  if (!value) return 'N/A'
   try {
     return format(parseISO(value), 'MMM d, yyyy HH:mm') + ' UTC'
   } catch {
@@ -74,7 +74,7 @@ export function formatTimestamp(value: string | null | undefined): string {
 }
 
 export function formatDate(value: string | null | undefined): string {
-  if (!value) return '—'
+  if (!value) return 'N/A'
   try {
     return format(parseISO(value), 'MMM d, yyyy')
   } catch {
@@ -83,7 +83,7 @@ export function formatDate(value: string | null | undefined): string {
 }
 
 export function formatRelativeTime(value: string | null | undefined): string {
-  if (!value) return '—'
+  if (!value) return 'N/A'
   try {
     return formatDistanceToNow(parseISO(value), { addSuffix: true })
   } catch {
@@ -104,7 +104,7 @@ export function formatCountdown(targetUtc: string): string {
     if (hours > 0) return `${hours}h ${mins}m`
     return `${mins}m`
   } catch {
-    return '—'
+    return 'N/A'
   }
 }
 
