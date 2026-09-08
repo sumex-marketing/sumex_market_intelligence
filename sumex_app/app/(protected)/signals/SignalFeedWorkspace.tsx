@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Signal, SignalSeverity, SignalType } from '@/lib/types'
-import { formatRelativeTime, getScoreClass } from '@/lib/utils'
+import { formatRelativeTime, formatSignalType, getSignalScoreBadge, formatSignalStatus } from '@/lib/utils'
 import {
   Zap,
   Plus,
@@ -245,14 +245,20 @@ export default function SignalFeedWorkspace({
                 <Filter size={14} /> Status:
               </div>
               <div className="flex items-center gap-1">
-                {['ALL', 'new', 'investigating', 'validated', 'content_ready'].map((st) => (
+                {[
+                { val: 'ALL', label: 'All' },
+                { val: 'new', label: 'New' },
+                { val: 'investigating', label: 'Under Review' },
+                { val: 'validated', label: 'Confirmed' },
+                { val: 'content_ready', label: 'Draft Ready' },
+              ].map(({ val, label }) => (
                   <button
-                    key={st}
-                    onClick={() => setStatusFilter(st)}
-                    className={`btn btn-xs ${statusFilter === st ? 'btn-secondary' : 'btn-ghost'}`}
-                    style={statusFilter === st ? { borderColor: '#23F7DD', color: '#23F7DD' } : {}}
+                    key={val}
+                    onClick={() => setStatusFilter(val)}
+                    className={`btn btn-xs ${statusFilter === val ? 'btn-secondary' : 'btn-ghost'}`}
+                    style={statusFilter === val ? { borderColor: '#23F7DD', color: '#23F7DD' } : {}}
                   >
-                    {st.toUpperCase()}
+                    {label}
                   </button>
                 ))}
               </div>
@@ -360,37 +366,47 @@ export default function SignalFeedWorkspace({
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredSignals.map((sig) => (
+                    {filteredSignals.map((sig) => {
+                      const scoreBadge = getSignalScoreBadge(sig.score)
+                      const typeInfo = formatSignalType(sig.signal_type)
+                      const statusInfo = formatSignalStatus(sig.status)
+                      const severityColors: Record<string, { color: string; bg: string }> = {
+                        critical: { color: '#f87171', bg: 'rgba(239,68,68,0.16)' },
+                        high:     { color: '#fbbf24', bg: 'rgba(245,158,11,0.16)' },
+                        medium:   { color: '#23F7DD', bg: 'rgba(35,247,221,0.14)' },
+                        low:      { color: '#94a3b8', bg: 'rgba(148,163,184,0.12)' },
+                      }
+                      const sevStyle = severityColors[sig.severity] ?? severityColors.medium
+                      return (
                       <tr key={sig.id}>
+                        {/* Score badge */}
                         <td style={{ overflow: 'hidden' }}>
-                          <div
-                            style={{
-                              width: 36,
-                              height: 36,
-                              borderRadius: 8,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontFamily: 'var(--font-mono)',
-                              fontWeight: 700,
-                              fontSize: '0.9rem',
-                              background:
-                                (sig.score ?? 5) >= 7
-                                  ? 'rgba(239,68,68,0.18)'
-                                  : (sig.score ?? 5) >= 4
-                                  ? 'rgba(245,158,11,0.18)'
-                                  : 'rgba(35,247,221,0.15)',
-                              color:
-                                (sig.score ?? 5) >= 7
-                                  ? '#f87171'
-                                  : (sig.score ?? 5) >= 4
-                                  ? '#fbbf24'
-                                  : '#23F7DD',
-                            }}
-                          >
-                            {sig.score ? sig.score.toFixed(1) : '—'}
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                            <div
+                              style={{
+                                width: 36,
+                                height: 36,
+                                borderRadius: 8,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontFamily: 'var(--font-mono)',
+                                fontWeight: 800,
+                                fontSize: '0.88rem',
+                                background: scoreBadge.bg,
+                                color: scoreBadge.color,
+                                border: `1px solid ${scoreBadge.color}33`,
+                              }}
+                            >
+                              {sig.score ? sig.score.toFixed(1) : '—'}
+                            </div>
+                            <div style={{ fontSize: '0.62rem', color: scoreBadge.color, fontWeight: 600, textAlign: 'center', lineHeight: 1.1, maxWidth: 54, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {scoreBadge.label}
+                            </div>
                           </div>
                         </td>
+
+                        {/* Title + asset */}
                         <td style={{ overflow: 'hidden' }}>
                           <div style={{ width: '100%', overflow: 'hidden' }}>
                             <Link
@@ -408,20 +424,70 @@ export default function SignalFeedWorkspace({
                             >
                               {sig.title}
                             </Link>
-                            <div className="flex items-center gap-1 mt-1 font-mono font-bold" style={{ fontSize: '0.82rem', color: '#23F7DD' }}>
-                              {sig.subject}
+                            <div className="flex items-center gap-1 mt-1" style={{ fontSize: '0.78rem' }}>
+                              <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#23F7DD' }}>{sig.subject}</span>
                             </div>
                           </div>
                         </td>
+
+                        {/* Signal type — human readable */}
                         <td style={{ overflow: 'hidden' }}>
-                          <span className="badge badge-purple" style={{ fontSize: '0.82rem' }}>{sig.signal_type}</span>
+                          <span
+                            style={{
+                              display: 'inline-block',
+                              padding: '3px 8px',
+                              borderRadius: 6,
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                              background: typeInfo.bg,
+                              color: typeInfo.color,
+                              border: `1px solid ${typeInfo.color}33`,
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {typeInfo.label}
+                          </span>
                         </td>
+
+                        {/* Severity */}
                         <td style={{ overflow: 'hidden' }}>
-                          <span className={`badge badge-${sig.severity}`} style={{ fontSize: '0.82rem' }}>{sig.severity}</span>
+                          <span
+                            style={{
+                              display: 'inline-block',
+                              padding: '3px 8px',
+                              borderRadius: 6,
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              background: sevStyle.bg,
+                              color: sevStyle.color,
+                              border: `1px solid ${sevStyle.color}33`,
+                              textTransform: 'capitalize',
+                            }}
+                          >
+                            {sig.severity}
+                          </span>
                         </td>
+
+                        {/* Status — human readable */}
                         <td style={{ overflow: 'hidden' }}>
-                          <span className={`badge badge-signal-${sig.status}`} style={{ fontSize: '0.82rem' }}>{sig.status}</span>
+                          <span
+                            style={{
+                              display: 'inline-block',
+                              padding: '3px 8px',
+                              borderRadius: 6,
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                              background: statusInfo.bg,
+                              color: statusInfo.color,
+                              border: `1px solid ${statusInfo.color}33`,
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {statusInfo.label}
+                          </span>
                         </td>
+
+                        {/* Trigger evidence */}
                         <td style={{ overflow: 'hidden' }}>
                           <div
                             style={{
@@ -436,9 +502,13 @@ export default function SignalFeedWorkspace({
                             {sig.trigger_detail ?? sig.evidence_summary ?? 'Standard threshold breach'}
                           </div>
                         </td>
-                        <td style={{ whiteSpace: 'nowrap', overflow: 'hidden', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+
+                        {/* Time */}
+                        <td style={{ whiteSpace: 'nowrap', overflow: 'hidden', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
                           {formatRelativeTime(sig.created_at)}
                         </td>
+
+                        {/* Actions */}
                         <td style={{ width: '110px', textAlign: 'right', whiteSpace: 'nowrap' }}>
                           <Link
                             href={`/signals/${sig.id}`}
@@ -449,7 +519,8 @@ export default function SignalFeedWorkspace({
                           </Link>
                         </td>
                       </tr>
-                    ))}
+                    )}
+                    )}
                   </tbody>
                 </table>
               </div>

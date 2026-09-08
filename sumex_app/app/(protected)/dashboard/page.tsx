@@ -6,6 +6,9 @@ import {
   formatLargeNumber,
   formatDominance,
   formatRelativeTime,
+  formatSignalType,
+  getSignalScoreBadge,
+  formatSignalStatus,
 } from '@/lib/utils'
 import {
   Zap,
@@ -547,50 +550,87 @@ export default async function DashboardPage() {
               </div>
             ) : (
               <div className="flex-col gap-0">
-                {signals.map((sig: any, idx: number) => (
+                {signals.map((sig: any, idx: number) => {
+                  const scoreBadge = getSignalScoreBadge(sig.score)
+                  const typeInfo = formatSignalType(sig.signal_type)
+                  const statusInfo = formatSignalStatus(sig.status)
+                  return (
                   <Link
                     key={sig.id}
                     href={`/signals/${sig.id}`}
                     style={{
                       textDecoration: 'none',
                       display: 'flex',
-                      alignItems: 'center',
-                      gap: 14,
+                      alignItems: 'flex-start',
+                      gap: 12,
                       padding: '14px 20px',
                       transition: 'background var(--transition-fast)',
                       borderBottom:
                         idx < signals.length - 1 ? '1px solid var(--border-subtle)' : 'none',
                     }}
                   >
+                    {/* Score pill */}
                     <div
                       style={{
-                        width: 38,
-                        height: 38,
-                        borderRadius: 10,
-                        flexShrink: 0,
+                        width: 42,
+                        minWidth: 42,
                         display: 'flex',
+                        flexDirection: 'column',
                         alignItems: 'center',
-                        justifyContent: 'center',
-                        fontFamily: 'var(--font-mono)',
-                        fontWeight: 700,
-                        fontSize: '0.85rem',
-                        background:
-                          sig.score >= 7
-                            ? 'rgba(239,68,68,0.15)'
-                            : sig.score >= 4
-                            ? 'rgba(245,158,11,0.15)'
-                            : 'var(--bg-elevated)',
-                        color:
-                          sig.score >= 7
-                            ? 'var(--red)'
-                            : sig.score >= 4
-                            ? 'var(--accent-amber)'
-                            : 'var(--text-muted)',
+                        gap: 3,
+                        flexShrink: 0,
                       }}
                     >
-                      {sig.score ? sig.score.toFixed(1) : '—'}
+                      <div
+                        style={{
+                          width: 38,
+                          height: 38,
+                          borderRadius: 10,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontFamily: 'var(--font-mono)',
+                          fontWeight: 800,
+                          fontSize: '0.85rem',
+                          background: scoreBadge.bg,
+                          color: scoreBadge.color,
+                          border: `1px solid ${scoreBadge.color}40`,
+                        }}
+                      >
+                        {sig.score ? sig.score.toFixed(1) : '—'}
+                      </div>
+                      <div style={{ fontSize: '0.58rem', color: scoreBadge.color, fontWeight: 700, textAlign: 'center', lineHeight: 1.1, maxWidth: 42, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {scoreBadge.label}
+                      </div>
                     </div>
+
+                    {/* Content */}
                     <div style={{ flex: 1, minWidth: 0 }}>
+                      {/* Type chip + subject */}
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span
+                          style={{
+                            display: 'inline-block',
+                            padding: '2px 7px',
+                            borderRadius: 5,
+                            fontSize: '0.7rem',
+                            fontWeight: 700,
+                            background: typeInfo.bg,
+                            color: typeInfo.color,
+                            border: `1px solid ${typeInfo.color}33`,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.04em',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {typeInfo.label}
+                        </span>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.75rem', color: '#23F7DD' }}>
+                          {sig.subject}
+                        </span>
+                      </div>
+
+                      {/* Title */}
                       <div
                         className="truncate"
                         style={{
@@ -601,19 +641,39 @@ export default async function DashboardPage() {
                       >
                         {sig.title}
                       </div>
+
+                      {/* Meta row */}
                       <div
-                        className="flex items-center gap-2 mt-1"
-                        style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}
+                        className="flex items-center gap-2 mt-1 flex-wrap"
+                        style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}
                       >
-                        <span>{sig.subject}</span>
-                        <span>·</span>
                         <Clock size={10} />
                         <span>{formatRelativeTime(sig.created_at)}</span>
                       </div>
                     </div>
-                    <span className={`badge badge-signal-${sig.status}`}>{sig.status}</span>
+
+                    {/* Status badge */}
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        padding: '3px 8px',
+                        borderRadius: 6,
+                        fontSize: '0.72rem',
+                        fontWeight: 600,
+                        background: statusInfo.bg,
+                        color: statusInfo.color,
+                        border: `1px solid ${statusInfo.color}33`,
+                        whiteSpace: 'nowrap',
+                        flexShrink: 0,
+                        alignSelf: 'flex-start',
+                        marginTop: 2,
+                      }}
+                    >
+                      {statusInfo.label}
+                    </span>
                   </Link>
-                ))}
+                  )
+                })}
               </div>
             )}
           </div>

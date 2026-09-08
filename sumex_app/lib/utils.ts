@@ -166,6 +166,62 @@ export function getScoreClass(score: number | null | undefined): string {
   return 'low'
 }
 
+export function formatSignalType(type: string | null | undefined): { label: string; color: string; bg: string } {
+  switch (type) {
+    case 'price_move':
+      return { label: 'Price Anomaly', color: '#F7931A', bg: 'rgba(247,147,26,0.15)' }
+    case 'volume_spike':
+      return { label: 'Volume Surge', color: '#9945FF', bg: 'rgba(153,69,255,0.15)' }
+    case 'etf_flow':
+      return { label: 'ETF Flow Spike', color: '#23F7DD', bg: 'rgba(35,247,221,0.15)' }
+    case 'macro_event':
+      return { label: 'Macro Catalyst', color: '#3B82F6', bg: 'rgba(59,130,246,0.15)' }
+    case 'manual_catalyst':
+      return { label: 'Analyst Catalyst', color: '#EC4899', bg: 'rgba(236,72,153,0.15)' }
+    default:
+      return { label: type ? type.replace(/_/g, ' ') : 'Market Signal', color: '#23F7DD', bg: 'rgba(35,247,221,0.12)' }
+  }
+}
+
+export function getSignalScoreBadge(score: number | null | undefined): {
+  label: string
+  scoreText: string
+  color: string
+  bg: string
+} {
+  const num = score != null ? score : 5.0
+  const scoreText = `${num.toFixed(1)}/10`
+  if (num >= 7.5) {
+    return { label: 'Critical Anomaly', scoreText, color: '#f87171', bg: 'rgba(239,68,68,0.16)' }
+  }
+  if (num >= 6.0) {
+    return { label: 'High Significance', scoreText, color: '#fbbf24', bg: 'rgba(245,158,11,0.16)' }
+  }
+  if (num >= 4.0) {
+    return { label: 'Moderate Signal', scoreText, color: '#23F7DD', bg: 'rgba(35,247,221,0.14)' }
+  }
+  return { label: 'Low Alert', scoreText, color: '#94a3b8', bg: 'rgba(148,163,184,0.12)' }
+}
+
+export function formatSignalStatus(status: string | null | undefined): { label: string; color: string; bg: string } {
+  switch (status) {
+    case 'new':
+      return { label: 'New Signal', color: '#23F7DD', bg: 'rgba(35,247,221,0.15)' }
+    case 'investigating':
+      return { label: 'Under Review', color: '#fbbf24', bg: 'rgba(251,191,36,0.15)' }
+    case 'validated':
+      return { label: 'Confirmed Opportunity', color: '#38bdf8', bg: 'rgba(56,189,248,0.15)' }
+    case 'content_ready':
+      return { label: 'Draft Ready', color: '#c084fc', bg: 'rgba(192,132,252,0.15)' }
+    case 'published':
+      return { label: 'Published', color: '#4ade80', bg: 'rgba(74,222,128,0.15)' }
+    case 'rejected':
+      return { label: 'Dismissed', color: '#94a3b8', bg: 'rgba(148,163,184,0.15)' }
+    default:
+      return { label: status ?? 'Active', color: '#23F7DD', bg: 'rgba(35,247,221,0.15)' }
+  }
+}
+
 export function getConfidenceClass(confidence: number | null | undefined): string {
   if (confidence == null) return 'low'
   if (confidence >= 7) return 'high'
