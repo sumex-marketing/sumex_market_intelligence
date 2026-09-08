@@ -88,11 +88,11 @@ export default function DashboardQuickActions({
         <Sparkles size={13} className={scanning ? 'spin' : ''} />
         {scanning ? 'Scanning...' : 'Scan Signals'}
       </button>
-      <Link href="/market" className="btn btn-secondary btn-sm">
+      <Link href="/market" prefetch={true} className="btn btn-secondary btn-sm">
         <LineChart size={14} />
         Market Desk
       </Link>
-      <Link href="/signals" className="btn btn-primary btn-sm">
+      <Link href="/signals" prefetch={true} className="btn btn-primary btn-sm">
         <Zap size={14} />
         Signal Feed
       </Link>
