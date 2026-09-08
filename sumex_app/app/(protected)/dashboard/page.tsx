@@ -442,52 +442,56 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-5 flex-wrap">
-          <div className="flex items-center gap-2">
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>BTC:</span>
+        <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg" style={{ background: 'rgba(247,147,26,0.06)', border: '1px solid rgba(247,147,26,0.2)' }}>
+            <CryptoIcon symbol="BTC" size={18} />
+            <span style={{ fontSize: '0.78rem', color: '#F7931A', fontWeight: 700 }}>BTC</span>
             <span
               className={`badge ${(latestBtcFlow?.net_flow_usd ?? 0) >= 0 ? 'badge-green' : 'badge-red'}`}
-              style={{ fontFamily: 'var(--font-mono)', fontWeight: 700 }}
+              style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.75rem', padding: '2px 6px' }}
             >
-              {(latestBtcFlow?.net_flow_usd ?? 0) >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+              {(latestBtcFlow?.net_flow_usd ?? 0) >= 0 ? <ArrowUpRight size={11} /> : <ArrowDownRight size={11} />}
               {formatFlow(latestBtcFlow?.net_flow_usd ?? null)}
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>ETH:</span>
+          <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg" style={{ background: 'rgba(98,126,234,0.06)', border: '1px solid rgba(98,126,234,0.2)' }}>
+            <CryptoIcon symbol="ETH" size={18} />
+            <span style={{ fontSize: '0.78rem', color: '#8299F8', fontWeight: 700 }}>ETH</span>
             <span
               className={`badge ${(latestEthFlow?.net_flow_usd ?? 0) >= 0 ? 'badge-green' : 'badge-red'}`}
-              style={{ fontFamily: 'var(--font-mono)', fontWeight: 700 }}
+              style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.75rem', padding: '2px 6px' }}
             >
-              {(latestEthFlow?.net_flow_usd ?? 0) >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+              {(latestEthFlow?.net_flow_usd ?? 0) >= 0 ? <ArrowUpRight size={11} /> : <ArrowDownRight size={11} />}
               {formatFlow(latestEthFlow?.net_flow_usd ?? null)}
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>SOL:</span>
+          <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg" style={{ background: 'rgba(153,69,255,0.06)', border: '1px solid rgba(153,69,255,0.2)' }}>
+            <CryptoIcon symbol="SOL" size={18} />
+            <span style={{ fontSize: '0.78rem', color: '#A855F7', fontWeight: 700 }}>SOL</span>
             <span
               className={`badge ${(latestSolFlow?.net_flow_usd ?? 0) >= 0 ? 'badge-green' : 'badge-red'}`}
-              style={{ fontFamily: 'var(--font-mono)', fontWeight: 700 }}
+              style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.75rem', padding: '2px 6px' }}
             >
-              {(latestSolFlow?.net_flow_usd ?? 0) >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+              {(latestSolFlow?.net_flow_usd ?? 0) >= 0 ? <ArrowUpRight size={11} /> : <ArrowDownRight size={11} />}
               {formatFlow(latestSolFlow?.net_flow_usd ?? null)}
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>HYPE:</span>
+          <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg" style={{ background: 'rgba(35,247,221,0.06)', border: '1px solid rgba(35,247,221,0.2)' }}>
+            <CryptoIcon symbol="HYPE" size={18} />
+            <span style={{ fontSize: '0.78rem', color: '#23F7DD', fontWeight: 700 }}>HYPE</span>
             <span
               className={`badge ${(latestHypeFlow?.net_flow_usd ?? 0) >= 0 ? 'badge-green' : 'badge-red'}`}
-              style={{ fontFamily: 'var(--font-mono)', fontWeight: 700 }}
+              style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.75rem', padding: '2px 6px' }}
             >
-              {(latestHypeFlow?.net_flow_usd ?? 0) >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+              {(latestHypeFlow?.net_flow_usd ?? 0) >= 0 ? <ArrowUpRight size={11} /> : <ArrowDownRight size={11} />}
               {formatFlow(latestHypeFlow?.net_flow_usd ?? null)}
             </span>
           </div>
 
-          <Link href="/etf" className="btn btn-ghost btn-sm" style={{ color: '#8E33FF', fontSize: '0.75rem' }}>
+          <Link href="/macro?tab=etf" className="btn btn-ghost btn-sm" style={{ color: '#8E33FF', fontSize: '0.75rem' }}>
             Full ETF Desk <ChevronRight size={12} />
           </Link>
         </div>

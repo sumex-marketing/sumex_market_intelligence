@@ -14,6 +14,7 @@ import {
   ArrowDownRight,
   Layers,
 } from 'lucide-react'
+import CryptoIcon from '@/app/components/CryptoIcon'
 
 interface MacroCalendarWorkspaceProps {
   events: MacroEvent[]
@@ -360,31 +361,31 @@ export default function MacroCalendarWorkspace({
               className="card"
               style={{
                 borderColor: 'rgba(35,247,221,0.35)',
-                background: 'linear-gradient(135deg, rgba(35,247,221,0.07), rgba(142,51,255,0.07))',
+                background: 'linear-gradient(135deg, rgba(35,247,221,0.08), rgba(142,51,255,0.08))',
                 position: 'relative',
                 padding: '16px 18px',
+                boxShadow: '0 8px 24px -6px rgba(35,247,221,0.1)',
               }}
             >
               <div className="flex items-center justify-between gap-2 mb-2">
                 <div className="flex items-center gap-2 min-w-0">
                   <div
                     style={{
-                      width: 24,
-                      height: 24,
-                      borderRadius: '50%',
-                      background: 'rgba(35,247,221,0.18)',
-                      color: '#23F7DD',
+                      width: 28,
+                      height: 28,
+                      borderRadius: 8,
+                      background: 'linear-gradient(135deg, rgba(35,247,221,0.2), rgba(142,51,255,0.2))',
+                      border: '1px solid rgba(35,247,221,0.4)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontSize: '0.7rem',
-                      fontWeight: 800,
+                      color: '#23F7DD',
                       flexShrink: 0,
                     }}
                   >
-                    ALL
+                    <Layers size={16} />
                   </div>
-                  <span style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
+                  <span style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
                     All Spot ETFs
                   </span>
                 </div>
@@ -401,7 +402,7 @@ export default function MacroCalendarWorkspace({
                   alignItems: 'center',
                   gap: 6,
                   whiteSpace: 'nowrap',
-                  fontSize: '1.4rem',
+                  fontSize: '1.45rem',
                   fontWeight: 800,
                 }}
               >
@@ -412,35 +413,32 @@ export default function MacroCalendarWorkspace({
                 )}
                 {formatFlow(combinedLatestFlow)}
               </div>
-              <div className="text-xs text-muted mt-2" style={{ whiteSpace: 'nowrap', fontSize: '0.72rem' }}>
-                {combinedFundCount} tracked institutional funds
+              <div className="text-xs text-muted mt-2 flex items-center gap-1.5" style={{ whiteSpace: 'nowrap', fontSize: '0.72rem' }}>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#23F7DD]" />
+                <span>{combinedFundCount} tracked institutional funds</span>
               </div>
             </div>
 
             {/* BTC */}
-            <div className="card" style={{ borderColor: 'rgba(247,147,26,0.25)', position: 'relative', padding: '16px 18px' }}>
+            <div
+              className="card"
+              style={{
+                borderColor: 'rgba(247,147,26,0.3)',
+                background: 'linear-gradient(180deg, rgba(247,147,26,0.06) 0%, rgba(20,24,33,0.85) 100%)',
+                position: 'relative',
+                padding: '16px 18px',
+                boxShadow: '0 8px 24px -6px rgba(247,147,26,0.1)',
+              }}
+            >
               <div className="flex items-center justify-between gap-2 mb-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <div
-                    style={{
-                      width: 24,
-                      height: 24,
-                      borderRadius: '50%',
-                      background: 'rgba(247,147,26,0.18)',
-                      color: '#F7931A',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '0.7rem',
-                      fontWeight: 800,
-                      flexShrink: 0,
-                    }}
-                  >
-                    BTC
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <CryptoIcon symbol="BTC" name="Bitcoin" size={28} />
+                  <div>
+                    <span style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)', display: 'block', lineHeight: 1.1 }}>
+                      Bitcoin Spot
+                    </span>
+                    <span style={{ fontSize: '0.68rem', color: '#F7931A', fontWeight: 600 }}>BTC</span>
                   </div>
-                  <span style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
-                    Bitcoin Spot
-                  </span>
                 </div>
                 <span className="badge badge-muted" style={{ fontSize: '0.7rem', padding: '1px 6px', whiteSpace: 'nowrap', flexShrink: 0 }}>
                   {latestBtcTotal?.date ?? 'Latest'}
@@ -455,7 +453,7 @@ export default function MacroCalendarWorkspace({
                   alignItems: 'center',
                   gap: 6,
                   whiteSpace: 'nowrap',
-                  fontSize: '1.4rem',
+                  fontSize: '1.45rem',
                   fontWeight: 800,
                 }}
               >
@@ -466,35 +464,32 @@ export default function MacroCalendarWorkspace({
                 )}
                 {formatFlow(latestBtcTotal?.net_flow_usd ?? 0)}
               </div>
-              <div className="text-xs text-muted mt-2" style={{ whiteSpace: 'nowrap', fontSize: '0.72rem' }}>
-                {latestBtcTotal?.fund_count ?? 0} institutional spot funds
+              <div className="text-xs text-muted mt-2 flex items-center gap-1.5" style={{ whiteSpace: 'nowrap', fontSize: '0.72rem' }}>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#F7931A]" />
+                <span>{latestBtcTotal?.fund_count ?? 0} institutional spot funds</span>
               </div>
             </div>
 
             {/* ETH */}
-            <div className="card" style={{ borderColor: 'rgba(98,126,234,0.25)', position: 'relative', padding: '16px 18px' }}>
+            <div
+              className="card"
+              style={{
+                borderColor: 'rgba(98,126,234,0.3)',
+                background: 'linear-gradient(180deg, rgba(98,126,234,0.06) 0%, rgba(20,24,33,0.85) 100%)',
+                position: 'relative',
+                padding: '16px 18px',
+                boxShadow: '0 8px 24px -6px rgba(98,126,234,0.1)',
+              }}
+            >
               <div className="flex items-center justify-between gap-2 mb-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <div
-                    style={{
-                      width: 24,
-                      height: 24,
-                      borderRadius: '50%',
-                      background: 'rgba(98,126,234,0.18)',
-                      color: '#627EEA',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '0.7rem',
-                      fontWeight: 800,
-                      flexShrink: 0,
-                    }}
-                  >
-                    ETH
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <CryptoIcon symbol="ETH" name="Ethereum" size={28} />
+                  <div>
+                    <span style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)', display: 'block', lineHeight: 1.1 }}>
+                      Ethereum Spot
+                    </span>
+                    <span style={{ fontSize: '0.68rem', color: '#8299F8', fontWeight: 600 }}>ETH</span>
                   </div>
-                  <span style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
-                    Ethereum Spot
-                  </span>
                 </div>
                 <span className="badge badge-muted" style={{ fontSize: '0.7rem', padding: '1px 6px', whiteSpace: 'nowrap', flexShrink: 0 }}>
                   {latestEthTotal?.date ?? 'Latest'}
@@ -509,7 +504,7 @@ export default function MacroCalendarWorkspace({
                   alignItems: 'center',
                   gap: 6,
                   whiteSpace: 'nowrap',
-                  fontSize: '1.4rem',
+                  fontSize: '1.45rem',
                   fontWeight: 800,
                 }}
               >
@@ -520,35 +515,32 @@ export default function MacroCalendarWorkspace({
                 )}
                 {formatFlow(latestEthTotal?.net_flow_usd ?? 0)}
               </div>
-              <div className="text-xs text-muted mt-2" style={{ whiteSpace: 'nowrap', fontSize: '0.72rem' }}>
-                {latestEthTotal?.fund_count ?? 0} institutional spot funds
+              <div className="text-xs text-muted mt-2 flex items-center gap-1.5" style={{ whiteSpace: 'nowrap', fontSize: '0.72rem' }}>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#8299F8]" />
+                <span>{latestEthTotal?.fund_count ?? 0} institutional spot funds</span>
               </div>
             </div>
 
             {/* SOL */}
-            <div className="card" style={{ borderColor: 'rgba(153,69,255,0.25)', position: 'relative', padding: '16px 18px' }}>
+            <div
+              className="card"
+              style={{
+                borderColor: 'rgba(153,69,255,0.3)',
+                background: 'linear-gradient(180deg, rgba(153,69,255,0.06) 0%, rgba(20,24,33,0.85) 100%)',
+                position: 'relative',
+                padding: '16px 18px',
+                boxShadow: '0 8px 24px -6px rgba(153,69,255,0.1)',
+              }}
+            >
               <div className="flex items-center justify-between gap-2 mb-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <div
-                    style={{
-                      width: 24,
-                      height: 24,
-                      borderRadius: '50%',
-                      background: 'rgba(153,69,255,0.18)',
-                      color: '#9945FF',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '0.7rem',
-                      fontWeight: 800,
-                      flexShrink: 0,
-                    }}
-                  >
-                    SOL
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <CryptoIcon symbol="SOL" name="Solana" size={28} />
+                  <div>
+                    <span style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)', display: 'block', lineHeight: 1.1 }}>
+                      Solana ETP
+                    </span>
+                    <span style={{ fontSize: '0.68rem', color: '#A855F7', fontWeight: 600 }}>SOL</span>
                   </div>
-                  <span style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
-                    Solana ETP
-                  </span>
                 </div>
                 <span className="badge badge-muted" style={{ fontSize: '0.7rem', padding: '1px 6px', whiteSpace: 'nowrap', flexShrink: 0 }}>
                   {latestSolTotal?.date ?? 'Latest'}
@@ -563,7 +555,7 @@ export default function MacroCalendarWorkspace({
                   alignItems: 'center',
                   gap: 6,
                   whiteSpace: 'nowrap',
-                  fontSize: '1.4rem',
+                  fontSize: '1.45rem',
                   fontWeight: 800,
                 }}
               >
@@ -574,35 +566,32 @@ export default function MacroCalendarWorkspace({
                 )}
                 {formatFlow(latestSolTotal?.net_flow_usd ?? 0)}
               </div>
-              <div className="text-xs text-muted mt-2" style={{ whiteSpace: 'nowrap', fontSize: '0.72rem' }}>
-                {latestSolTotal?.fund_count ?? 0} institutional trusts & ETPs
+              <div className="text-xs text-muted mt-2 flex items-center gap-1.5" style={{ whiteSpace: 'nowrap', fontSize: '0.72rem' }}>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#A855F7]" />
+                <span>{latestSolTotal?.fund_count ?? 0} institutional trusts & ETPs</span>
               </div>
             </div>
 
             {/* HYPE */}
-            <div className="card" style={{ borderColor: 'rgba(35,247,221,0.25)', position: 'relative', padding: '16px 18px' }}>
+            <div
+              className="card"
+              style={{
+                borderColor: 'rgba(35,247,221,0.3)',
+                background: 'linear-gradient(180deg, rgba(35,247,221,0.06) 0%, rgba(20,24,33,0.85) 100%)',
+                position: 'relative',
+                padding: '16px 18px',
+                boxShadow: '0 8px 24px -6px rgba(35,247,221,0.1)',
+              }}
+            >
               <div className="flex items-center justify-between gap-2 mb-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <div
-                    style={{
-                      width: 24,
-                      height: 24,
-                      borderRadius: '50%',
-                      background: 'rgba(35,247,221,0.18)',
-                      color: '#23F7DD',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '0.7rem',
-                      fontWeight: 800,
-                      flexShrink: 0,
-                    }}
-                  >
-                    HYPE
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <CryptoIcon symbol="HYPE" name="Hyperliquid" size={28} />
+                  <div>
+                    <span style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)', display: 'block', lineHeight: 1.1 }}>
+                      Hyperliquid
+                    </span>
+                    <span style={{ fontSize: '0.68rem', color: '#23F7DD', fontWeight: 600 }}>HYPE</span>
                   </div>
-                  <span style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
-                    Hyperliquid
-                  </span>
                 </div>
                 <span className="badge badge-muted" style={{ fontSize: '0.7rem', padding: '1px 6px', whiteSpace: 'nowrap', flexShrink: 0 }}>
                   {latestHypeTotal?.date ?? 'Latest'}
@@ -617,7 +606,7 @@ export default function MacroCalendarWorkspace({
                   alignItems: 'center',
                   gap: 6,
                   whiteSpace: 'nowrap',
-                  fontSize: '1.4rem',
+                  fontSize: '1.45rem',
                   fontWeight: 800,
                 }}
               >
@@ -628,8 +617,9 @@ export default function MacroCalendarWorkspace({
                 )}
                 {formatFlow(latestHypeTotal?.net_flow_usd ?? 0)}
               </div>
-              <div className="text-xs text-muted mt-2" style={{ whiteSpace: 'nowrap', fontSize: '0.72rem' }}>
-                {latestHypeTotal?.fund_count ?? 0} vault & index products
+              <div className="text-xs text-muted mt-2 flex items-center gap-1.5" style={{ whiteSpace: 'nowrap', fontSize: '0.72rem' }}>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#23F7DD]" />
+                <span>{latestHypeTotal?.fund_count ?? 0} vault & index products</span>
               </div>
             </div>
           </div>
@@ -654,19 +644,38 @@ export default function MacroCalendarWorkspace({
                 </span>
               </div>
 
-              <div className="flex items-center gap-2">
-                {(['ALL', 'BTC', 'ETH', 'SOL', 'HYPE'] as const).map((a) => (
-                  <button
-                    key={a}
-                    onClick={() => setSelectedEtfAsset(a)}
-                    className={`btn btn-sm ${
-                      selectedEtfAsset === a ? 'btn-primary' : 'btn-ghost text-muted'
-                    }`}
-                    style={{ fontSize: '0.82rem', padding: '3px 10px' }}
-                  >
-                    {a}
-                  </button>
-                ))}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {[
+                  { key: 'ALL', label: 'All Assets', icon: <Layers size={14} /> },
+                  { key: 'BTC', label: 'Bitcoin', icon: <CryptoIcon symbol="BTC" size={16} /> },
+                  { key: 'ETH', label: 'Ethereum', icon: <CryptoIcon symbol="ETH" size={16} /> },
+                  { key: 'SOL', label: 'Solana', icon: <CryptoIcon symbol="SOL" size={16} /> },
+                  { key: 'HYPE', label: 'Hyperliquid', icon: <CryptoIcon symbol="HYPE" size={16} /> },
+                ].map((item) => {
+                  const isSelected = selectedEtfAsset === item.key
+                  return (
+                    <button
+                      key={item.key}
+                      onClick={() => setSelectedEtfAsset(item.key as any)}
+                      className="btn btn-sm flex items-center gap-1.5 transition-all"
+                      style={{
+                        fontSize: '0.82rem',
+                        padding: '4px 12px',
+                        borderRadius: '8px',
+                        background: isSelected
+                          ? 'linear-gradient(135deg, rgba(35,247,221,0.2) 0%, rgba(142,51,255,0.2) 100%)'
+                          : 'rgba(255,255,255,0.04)',
+                        borderColor: isSelected ? 'rgba(35,247,221,0.5)' : 'rgba(255,255,255,0.08)',
+                        color: isSelected ? '#FFFFFF' : 'var(--text-muted)',
+                        fontWeight: isSelected ? 700 : 500,
+                        boxShadow: isSelected ? '0 0 10px rgba(35,247,221,0.15)' : 'none',
+                      }}
+                    >
+                      {item.icon}
+                      <span>{item.label}</span>
+                    </button>
+                  )
+                })}
               </div>
             </div>
 
@@ -675,7 +684,7 @@ export default function MacroCalendarWorkspace({
                 <thead>
                   <tr>
                     <th style={{ width: '105px', whiteSpace: 'nowrap' }}>Date</th>
-                    <th style={{ width: '75px', whiteSpace: 'nowrap' }}>Asset</th>
+                    <th style={{ width: '100px', whiteSpace: 'nowrap' }}>Asset</th>
                     <th style={{ width: '90px', whiteSpace: 'nowrap' }}>Ticker</th>
                     <th>Institutional Fund Name</th>
                     <th style={{ textAlign: 'right', width: '140px', whiteSpace: 'nowrap' }}>Fund Net Flow</th>
@@ -739,16 +748,27 @@ export default function MacroCalendarWorkspace({
                                         {formatFlow(dayTotal)}
                                       </span>
                                     </div>
-                                    <div className="flex items-center gap-4 text-xs" style={{ fontFamily: 'var(--font-mono)' }}>
+                                    <div className="flex items-center gap-3 text-xs flex-wrap" style={{ fontFamily: 'var(--font-mono)' }}>
                                       {activeAssets.map((a) => {
                                         const aTotal = rows
                                           .filter((r) => r.asset === a)
                                           .reduce((sum, f) => sum + (f.flow_usd ?? 0), 0)
                                         return (
-                                          <span key={a} style={{ color: aTotal >= 0 ? 'var(--green)' : 'var(--red)', whiteSpace: 'nowrap' }}>
-                                            <span style={{ color: 'var(--text-muted)', marginRight: 4 }}>{a}:</span>
-                                            {formatFlow(aTotal)}
-                                          </span>
+                                          <div
+                                            key={a}
+                                            className="flex items-center gap-1.5 px-2 py-0.5 rounded"
+                                            style={{
+                                              background: 'rgba(255,255,255,0.05)',
+                                              border: '1px solid rgba(255,255,255,0.08)',
+                                              whiteSpace: 'nowrap',
+                                            }}
+                                          >
+                                            <CryptoIcon symbol={a} size={14} />
+                                            <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>{a}:</span>
+                                            <span style={{ color: aTotal >= 0 ? 'var(--green)' : 'var(--red)', fontWeight: 700 }}>
+                                              {formatFlow(aTotal)}
+                                            </span>
+                                          </div>
                                         )
                                       })}
                                     </div>
@@ -770,6 +790,15 @@ export default function MacroCalendarWorkspace({
                             const isPositive = flowUsd > 0
                             const isZero = flowUsd === 0
 
+                            const assetColor =
+                              flow.asset === 'BTC'
+                                ? '#F7931A'
+                                : flow.asset === 'ETH'
+                                ? '#8299F8'
+                                : flow.asset === 'SOL'
+                                ? '#A855F7'
+                                : '#23F7DD'
+
                             return (
                               <tr key={flow.id}>
                                 {/* Date only shown on first row of date */}
@@ -777,23 +806,31 @@ export default function MacroCalendarWorkspace({
                                   {aIdx === 0 && idx === 0 ? date : ''}
                                 </td>
                                 <td style={{ whiteSpace: 'nowrap' }}>
-                                  <span
-                                    className={`badge ${
-                                      flow.asset === 'BTC'
-                                        ? 'badge-amber'
-                                        : flow.asset === 'ETH'
-                                        ? 'badge-purple'
-                                        : flow.asset === 'SOL'
-                                        ? 'badge-blue'
-                                        : 'badge-cyan'
-                                    }`}
-                                    style={{ whiteSpace: 'nowrap' }}
-                                  >
-                                    {flow.asset}
-                                  </span>
+                                  <div className="flex items-center gap-2">
+                                    <CryptoIcon symbol={flow.asset} size={20} />
+                                    <span
+                                      className="font-bold text-xs"
+                                      style={{
+                                        fontFamily: 'var(--font-mono)',
+                                        color: assetColor,
+                                      }}
+                                    >
+                                      {flow.asset}
+                                    </span>
+                                  </div>
                                 </td>
                                 <td className="td-mono font-bold" style={{ color: '#23F7DD', whiteSpace: 'nowrap' }}>
-                                  {flow.fund_ticker}
+                                  <span
+                                    style={{
+                                      padding: '2px 7px',
+                                      borderRadius: 5,
+                                      background: 'rgba(35,247,221,0.08)',
+                                      border: '1px solid rgba(35,247,221,0.2)',
+                                      fontSize: '0.82rem',
+                                    }}
+                                  >
+                                    {flow.fund_ticker}
+                                  </span>
                                 </td>
                                 <td className="text-secondary text-xs" style={{ whiteSpace: 'nowrap' }}>
                                   {flow.fund_name}
@@ -845,15 +882,16 @@ export default function MacroCalendarWorkspace({
                                   >
                                     <div>{formatFlow(assetTotal)}</div>
                                     <div
+                                      className="flex items-center justify-end gap-1.5 mt-1"
                                       style={{
                                         fontSize: '0.68rem',
                                         fontWeight: 600,
                                         color: 'var(--text-muted)',
-                                        marginTop: 2,
                                         letterSpacing: '0.03em',
                                       }}
                                     >
-                                      {asset} Net Flow
+                                      <CryptoIcon symbol={asset} size={13} />
+                                      <span>{asset} Daily Total</span>
                                     </div>
                                   </td>
                                 ) : null}
