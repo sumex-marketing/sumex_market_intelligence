@@ -97,6 +97,21 @@ Built and deployed an automated market signal and research card generator that r
 ### 4. Zero Em Dashes Policy Enforced
 - All em dash characters (`—`) in UI null fallbacks, ternary operators, AI prompt templates, and auto-generated signal titles have been replaced with standard hyphens (` - `) or `N/A`. Verified 0 occurrences across all `.ts` and `.tsx` files.
 
+### 5. Spot ETF Flows Dashboard: Official Asset Logos & Terminal UI
+- **Top 5 Highlight Cards ([`MacroCalendarWorkspace.tsx`](file:///Users/savvy/Desktop/sumex_market_intelligence/sumex_app/app/(protected)/macro/MacroCalendarWorkspace.tsx)):**
+  - Replaced generic colored letter circles with high-resolution [`CryptoIcon`](file:///Users/savvy/Desktop/sumex_market_intelligence/sumex_app/app/components/CryptoIcon.tsx) components for **Bitcoin (BTC)**, **Ethereum (ETH)**, **Solana (SOL)**, and **Hyperliquid (HYPE)**.
+  - Added an institutional portfolio multi-asset icon (`Layers`) for **All Spot ETFs**.
+  - Enhanced each card with subtle asset-themed gradient glows, prominent net flow metrics, and live tracked fund count indicators.
+- **Asset Filter Bar:**
+  - Integrated crypto logos directly into the filter switcher buttons (`All Assets`, `Bitcoin`, `Ethereum`, `Solana`, `Hyperliquid`) with glowing active selection states.
+- **Institutional Fund Flow Log Table:**
+  - Added official asset logos in the table's **Asset** column next to each ticker.
+  - Formatted **Ticker** column with dedicated monospaced badge pills.
+  - Enhanced the **Date Summary Banners** with crypto asset icons and individual asset net flow chips.
+  - Displayed crypto logos in the **Asset Daily Total** subtotal column next to `{asset} Daily Total`.
+- **Dashboard Spot ETF Snapshot ([`dashboard/page.tsx`](file:///Users/savvy/Desktop/sumex_market_intelligence/sumex_app/app/(protected)/dashboard/page.tsx)):**
+  - Replaced plain text tickers (`BTC:`, `ETH:`, `SOL:`, `HYPE:`) with real crypto coin icons inside sleek asset cards.
+
 ---
 
 ## Verification Summary
@@ -104,4 +119,6 @@ Built and deployed an automated market signal and research card generator that r
 - `source_health` database view active with all 4 ingestion pipelines reporting `healthy`.
 - Auto-sync timer dialog renders with high contrast and active countdown bar.
 - Signal feed priority score column is clearly labeled and unclipped across all viewports.
+- All Spot ETF flows views (cards, filters, table rows, subtotals, and dashboard snapshots) render official crypto asset logos.
+- Zero em dashes across the entire codebase.
 
