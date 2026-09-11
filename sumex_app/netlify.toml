@@ -23,3 +23,7 @@
 [[scheduled-functions]]
   name = "detect-signals"
   schedule = "*/30 * * * *"
+
+[[scheduled-functions]]
+  name = "fetch-news"
+  schedule = "*/15 * * * *"

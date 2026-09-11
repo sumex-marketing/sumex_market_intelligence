@@ -29,7 +29,7 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  // Public routes — no auth needed
+  // Public routes - no auth needed
   const publicPaths = ['/login', '/auth/callback']
   const isPublic = publicPaths.some((p) => pathname.startsWith(p))
 

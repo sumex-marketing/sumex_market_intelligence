@@ -1,5 +1,5 @@
 // ============================================================
-// Sumex Market Intelligence — Shared TypeScript Types
+// Sumex Market Intelligence - Shared TypeScript Types
 // ============================================================
 
 export type UserRole = 'admin' | 'editor' | 'viewer'

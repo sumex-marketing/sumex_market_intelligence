@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { scrapeFarsideEtfFlows } from '@/lib/sources/farside'
+import { isAuthorizedCronOrUser } from '@/lib/auth/cron-auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,14 +14,7 @@ export async function POST(request: Request) {
 }
 
 async function handleEtfSync(request: Request) {
-  const { searchParams } = new URL(request.url)
-  const secret = searchParams.get('secret')
-
-  if (
-    process.env.CRON_SECRET &&
-    secret !== process.env.CRON_SECRET &&
-    process.env.NODE_ENV === 'production'
-  ) {
+  if (!(await isAuthorizedCronOrUser(request))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -78,14 +72,14 @@ async function handleEtfSync(request: Request) {
     }
 
     // Update source health for Farside Investors
-    const now = new Date().toISOString()
+    const updateTime = new Date().toISOString()
     await supabase
       .from('sources')
       .update({
-        last_success_at: now,
+        last_success_at: updateTime,
         last_http_status: 200,
         records_received: allFlows.length,
-        data_timestamp: now,
+        data_timestamp: updateTime,
         error_message: null,
       })
       .eq('name', 'Farside Investors')

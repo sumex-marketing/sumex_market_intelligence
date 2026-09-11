@@ -64,19 +64,28 @@ export default function SettingsWorkspace({
     }
   }
 
-  const handleManualSync = async (type: 'market' | 'etf') => {
+  const handleManualSync = async (type: 'market' | 'etf' | 'all') => {
     setSyncing(type)
     try {
-      const endpoint = type === 'market' ? '/api/cron/fetch-market-data' : '/api/cron/fetch-etf-flows'
+      const endpoint =
+        type === 'all'
+          ? '/api/cron/sync-all'
+          : type === 'market'
+          ? '/api/cron/fetch-market-data'
+          : '/api/cron/fetch-etf-flows'
       const res = await fetch(endpoint, { method: 'POST' })
       const data = await res.json()
       if (data.success) {
-        alert(`Sync completed! ${data.records ?? 0} records updated.`)
+        alert(
+          type === 'all'
+            ? 'Universal sync completed: All intelligence feeds and signals updated.'
+            : `Sync completed: ${data.records ?? 0} records updated.`
+        )
         router.refresh()
       } else {
         alert(`Sync error: ${data.error}`)
       }
-    } catch (err) {
+    } catch {
       alert('Error triggering sync')
     } finally {
       setSyncing(null)
@@ -116,18 +125,32 @@ export default function SettingsWorkspace({
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <button
+            onClick={() => handleManualSync('all')}
+            className="btn btn-primary btn-sm flex items-center gap-1.5"
+            disabled={syncing != null}
+            style={{
+              background: 'linear-gradient(135deg, #23F7DD 0%, #8E33FF 100%)',
+              color: '#080d1a',
+              fontWeight: 700,
+              border: 'none',
+            }}
+          >
+            <RefreshCw size={13} className={syncing === 'all' ? 'spin' : ''} />
+            {syncing === 'all' ? 'Syncing All Feeds...' : 'Sync All Feeds (Universal)'}
+          </button>
+          <button
             onClick={() => handleManualSync('market')}
-            className="btn btn-primary btn-sm"
+            className="btn btn-secondary btn-sm"
             disabled={syncing != null}
           >
-            {syncing === 'market' ? 'Syncing CoinGecko...' : 'Sync Market Prices Now'}
+            {syncing === 'market' ? 'Syncing CoinGecko...' : 'Sync Prices Only'}
           </button>
           <button
             onClick={() => handleManualSync('etf')}
             className="btn btn-secondary btn-sm"
             disabled={syncing != null}
           >
-            {syncing === 'etf' ? 'Scraping Farside...' : 'Sync ETF Flows Now'}
+            {syncing === 'etf' ? 'Scraping Farside...' : 'Sync ETF Flows Only'}
           </button>
         </div>
       </div>

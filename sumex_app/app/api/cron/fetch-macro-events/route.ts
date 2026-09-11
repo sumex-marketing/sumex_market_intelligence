@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { fetchFmpMacroEvents } from '@/lib/sources/macro-calendar'
+import { isAuthorizedCronOrUser } from '@/lib/auth/cron-auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,14 +14,7 @@ export async function POST(request: Request) {
 }
 
 async function handleMacroSync(request: Request) {
-  const { searchParams } = new URL(request.url)
-  const secret = searchParams.get('secret')
-
-  if (
-    process.env.CRON_SECRET &&
-    secret !== process.env.CRON_SECRET &&
-    process.env.NODE_ENV === 'production'
-  ) {
+  if (!(await isAuthorizedCronOrUser(request))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -68,7 +62,7 @@ async function handleMacroSync(request: Request) {
           }
           await supabase.from('macro_events').update(update).eq('id', existing.id)
         } else {
-          // New event — insert it
+          // New event: insert it
           await supabase.from('macro_events').insert({
             type: ev.type,
             title: ev.title,

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
+import { isAuthorizedCronOrUser } from '@/lib/auth/cron-auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -332,16 +333,103 @@ async function isDuplicate(
   return (data?.length ?? 0) > 0
 }
 
+// ─── Main detection executor ──────────────────────────────────────────────────
+export async function executeSignalDetection(supabase: ReturnType<typeof createServiceClient>) {
+  // Run all detectors in parallel
+  const [etfSignals, macroSignals, priceSignals] = await Promise.all([
+    detectEtfFlowSpikes(supabase),
+    detectMacroSurprises(supabase),
+    detectPriceMoves(supabase),
+  ])
+
+  const allDetected = [...etfSignals, ...macroSignals, ...priceSignals]
+
+  let created = 0
+  let skipped = 0
+  const createdCards: string[] = []
+
+  for (const detected of allDetected) {
+    // Deduplication: skip if same type+subject signal exists in last 24h
+    const dup = await isDuplicate(supabase, detected.signal_type, detected.subject)
+    if (dup) {
+      skipped++
+      continue
+    }
+
+    // 1. Create signal
+    const { data: signal, error: signalError } = await supabase
+      .from('signals')
+      .insert({
+        signal_type: detected.signal_type,
+        subject: detected.subject,
+        title: detected.title,
+        severity: detected.severity,
+        score: detected.score,
+        trigger_detail: detected.trigger_detail,
+        evidence_summary: detected.evidence_summary,
+        status: 'new',
+        is_duplicate: false,
+      })
+      .select('id')
+      .single()
+
+    if (signalError || !signal) {
+      console.error('[detect-signals] Failed to insert signal:', signalError?.message)
+      continue
+    }
+
+    // 2. Create linked research card
+    const { data: card, error: cardError } = await supabase
+      .from('research_cards')
+      .insert({
+        signal_id: signal.id,
+        created_by: null, // system-generated
+        observation: detected.observation,
+        question: detected.question,
+        verified_facts: detected.verified_facts,
+        etf_context: detected.etf_context ?? null,
+        macro_context: detected.macro_context ?? null,
+        market_data_snapshot: detected.market_data_snapshot ?? null,
+        context_news: [],
+      })
+      .select('id')
+      .single()
+
+    if (cardError || !card) {
+      console.error('[detect-signals] Failed to insert research card:', cardError?.message)
+      // Clean up the signal we just created
+      await supabase.from('signals').delete().eq('id', signal.id)
+      continue
+    }
+
+    createdCards.push(card.id)
+    created++
+  }
+
+  // Update source health for Sumex Signal Engine
+  const updateTime = new Date().toISOString()
+  await supabase
+    .from('sources')
+    .update({
+      last_success_at: updateTime,
+      last_http_status: 200,
+      records_received: allDetected.length,
+      data_timestamp: updateTime,
+      error_message: null,
+    })
+    .eq('name', 'Sumex Signal Engine')
+
+  return {
+    detected: allDetected.length,
+    created,
+    skipped,
+    card_ids: createdCards,
+  }
+}
+
 // ─── Main handler ─────────────────────────────────────────────────────────────
 async function handleDetection(request: Request) {
-  const { searchParams } = new URL(request.url)
-  const secret = searchParams.get('secret')
-
-  if (
-    process.env.CRON_SECRET &&
-    secret !== process.env.CRON_SECRET &&
-    process.env.NODE_ENV === 'production'
-  ) {
+  if (!(await isAuthorizedCronOrUser(request))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -356,76 +444,7 @@ async function handleDetection(request: Request) {
     .single()
 
   try {
-    // Run all detectors in parallel
-    const [etfSignals, macroSignals, priceSignals] = await Promise.all([
-      detectEtfFlowSpikes(supabase),
-      detectMacroSurprises(supabase),
-      detectPriceMoves(supabase),
-    ])
-
-    const allDetected = [...etfSignals, ...macroSignals, ...priceSignals]
-
-    let created = 0
-    let skipped = 0
-    const createdCards: string[] = []
-
-    for (const detected of allDetected) {
-      // Deduplication: skip if same type+subject signal exists in last 24h
-      const dup = await isDuplicate(supabase, detected.signal_type, detected.subject)
-      if (dup) {
-        skipped++
-        continue
-      }
-
-      // 1. Create signal
-      const { data: signal, error: signalError } = await supabase
-        .from('signals')
-        .insert({
-          signal_type: detected.signal_type,
-          subject: detected.subject,
-          title: detected.title,
-          severity: detected.severity,
-          score: detected.score,
-          trigger_detail: detected.trigger_detail,
-          evidence_summary: detected.evidence_summary,
-          status: 'new',
-          is_duplicate: false,
-        })
-        .select('id')
-        .single()
-
-      if (signalError || !signal) {
-        console.error('[detect-signals] Failed to insert signal:', signalError?.message)
-        continue
-      }
-
-      // 2. Create linked research card
-      const { data: card, error: cardError } = await supabase
-        .from('research_cards')
-        .insert({
-          signal_id: signal.id,
-          created_by: null, // system-generated
-          observation: detected.observation,
-          question: detected.question,
-          verified_facts: detected.verified_facts,
-          etf_context: detected.etf_context ?? null,
-          macro_context: detected.macro_context ?? null,
-          market_data_snapshot: detected.market_data_snapshot ?? null,
-          context_news: [],
-        })
-        .select('id')
-        .single()
-
-      if (cardError || !card) {
-        console.error('[detect-signals] Failed to insert research card:', cardError?.message)
-        // Clean up the signal we just created
-        await supabase.from('signals').delete().eq('id', signal.id)
-        continue
-      }
-
-      createdCards.push(card.id)
-      created++
-    }
+    const result = await executeSignalDetection(supabase)
 
     if (job?.id) {
       await supabase
@@ -433,30 +452,14 @@ async function handleDetection(request: Request) {
         .update({
           status: 'success',
           finished_at: new Date().toISOString(),
-          records_processed: created,
+          records_processed: result.created,
         })
         .eq('id', job.id)
     }
 
-    // Update source health for Sumex Signal Engine
-    const now = new Date().toISOString()
-    await supabase
-      .from('sources')
-      .update({
-        last_success_at: now,
-        last_http_status: 200,
-        records_received: allDetected.length,
-        data_timestamp: now,
-        error_message: null,
-      })
-      .eq('name', 'Sumex Signal Engine')
-
     return NextResponse.json({
       success: true,
-      detected: allDetected.length,
-      created,
-      skipped,
-      card_ids: createdCards,
+      ...result,
     })
   } catch (err: any) {
     const errorMsg = err?.message ?? 'Signal detection error'

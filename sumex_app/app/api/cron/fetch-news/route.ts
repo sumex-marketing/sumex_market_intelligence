@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { fetchCryptoNewsFeeds } from '@/lib/sources/news'
+import { isAuthorizedCronOrUser } from '@/lib/auth/cron-auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,6 +14,10 @@ export async function POST(request: Request) {
 }
 
 async function handleNewsSync(request: Request) {
+  if (!(await isAuthorizedCronOrUser(request))) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   const supabase = createServiceClient()
   const now = new Date().toISOString()
   const jobName = 'fetch-news'
@@ -71,6 +76,41 @@ async function handleNewsSync(request: Request) {
           records_processed: processedCount,
         })
         .eq('id', job.id)
+    }
+
+    // Update source health for Crypto News Wire
+    const { data: existingSource } = await supabase
+      .from('sources')
+      .select('id')
+      .eq('name', 'Crypto News Wire')
+      .maybeSingle()
+
+    if (existingSource) {
+      await supabase
+        .from('sources')
+        .update({
+          last_success_at: now,
+          last_http_status: 200,
+          records_received: processedCount,
+          data_timestamp: now,
+          error_message: null,
+        })
+        .eq('id', existingSource.id)
+    } else {
+      await supabase
+        .from('sources')
+        .insert({
+          name: 'Crypto News Wire',
+          type: 'news',
+          base_url: 'https://cointelegraph.com/rss',
+          trust_level: 'structured',
+          active: true,
+          last_success_at: now,
+          last_http_status: 200,
+          records_received: processedCount,
+          data_timestamp: now,
+          error_message: null,
+        })
     }
 
     return NextResponse.json({

@@ -48,7 +48,7 @@ export default function AutoSyncStatus() {
     if (isSyncing) return
     setIsSyncing(true)
     try {
-      const res = await fetch('/api/cron/fetch-market-data', { method: 'POST' })
+      const res = await fetch('/api/cron/sync-all', { method: 'POST' })
       if (res.ok) {
         setLastSyncedAt(new Date())
         router.refresh()
@@ -161,7 +161,7 @@ export default function AutoSyncStatus() {
             e.stopPropagation()
             triggerSync(true)
           }}
-          title="Force Sync Prices Now"
+          title="Force Sync All Feeds Now (Prices, News, ETFs, Macro, Signals)"
         >
           <RefreshCw
             size={12}
@@ -320,11 +320,11 @@ export default function AutoSyncStatus() {
               }}
             >
               <RefreshCw size={13} className={isSyncing ? 'spin' : ''} />
-              {isSyncing ? 'Syncing Market Data...' : 'Sync Market Data Now'}
+              {isSyncing ? 'Syncing All Feeds (Prices, News, ETFs, Macro)...' : 'Sync All Feeds Now'}
             </button>
 
             <div className="flex items-center justify-between text-[10px] text-white/60 px-0.5">
-              <span>Status: {isSyncing ? 'Updating database' : 'Idle and monitoring'}</span>
+              <span>Coverage: Prices, News, ETFs, Macro, Signals</span>
               <span>
                 {lastSyncedAt ? `Synced ${lastSyncedAt.toLocaleTimeString()}` : 'Connected'}
               </span>

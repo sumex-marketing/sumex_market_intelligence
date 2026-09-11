@@ -2,7 +2,8 @@ import type { Config } from "@netlify/functions"
 
 export default async function handler(req: Request) {
   const siteUrl = process.env.URL || "http://localhost:3000"
-  const cronUrl = `${siteUrl}/api/cron/fetch-etf-flows`
+  const secret = process.env.CRON_SECRET ? `?secret=${encodeURIComponent(process.env.CRON_SECRET)}` : ""
+  const cronUrl = `${siteUrl}/api/cron/fetch-etf-flows${secret}`
 
   try {
     const res = await fetch(cronUrl, {
