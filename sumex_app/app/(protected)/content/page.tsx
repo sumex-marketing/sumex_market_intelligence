@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { formatRelativeTime } from '@/lib/utils'
-import { Edit3, Plus, FileText, CheckCircle } from 'lucide-react'
+import { Edit3 } from 'lucide-react'
+import ContentDraftList from './ContentDraftList'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,7 +18,7 @@ export default async function ContentPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-extrabold text-primary">Content Drafts</h1>
-          <p className="text-sm text-muted">Editorial review pipeline & publication readiness</p>
+          <p className="text-sm text-muted">Editorial review pipeline &amp; publication readiness</p>
         </div>
       </div>
 
@@ -34,37 +34,7 @@ export default async function ContentPage() {
           </Link>
         </div>
       ) : (
-        <div className="grid-3">
-          {drafts.map((draft) => (
-            <Link
-              key={draft.id}
-              href={`/content/${draft.id}`}
-              className="card flex-col justify-between gap-4"
-              style={{ textDecoration: 'none', background: 'var(--bg-elevated)' }}
-            >
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="badge badge-blue uppercase text-xs">{draft.format.replace('_', ' ')}</span>
-                  <span className={`badge badge-${draft.status === 'approved' ? 'green' : draft.status === 'editor_review' ? 'amber' : 'muted'}`}>
-                    {draft.status}
-                  </span>
-                </div>
-
-                <h3 className="font-bold text-primary text-base line-clamp-2" style={{ lineHeight: 1.4 }}>
-                  {draft.title ?? 'Untitled Intelligence Report'}
-                </h3>
-                <p className="text-xs text-muted mt-2 line-clamp-3">
-                  {draft.body ? draft.body.slice(0, 150) + '...' : 'No draft content body...'}
-                </p>
-              </div>
-
-              <div className="flex items-center justify-between pt-3 border-t border-subtle text-xs text-muted">
-                <span>Created {formatRelativeTime(draft.created_at)}</span>
-                <span className="text-blue font-medium">Edit Draft →</span>
-              </div>
-            </Link>
-          ))}
-        </div>
+        <ContentDraftList initialDrafts={drafts as any} />
       )}
     </div>
   )

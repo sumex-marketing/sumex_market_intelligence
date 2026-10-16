@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { formatRelativeTime } from '@/lib/utils'
-import { FileText, Plus, CheckCircle, Clock } from 'lucide-react'
+import { Plus, FileText } from 'lucide-react'
+import ResearchCardList from './ResearchCardList'
 
 export const dynamic = 'force-dynamic'
 
@@ -37,43 +37,7 @@ export default async function ResearchPage() {
           </Link>
         </div>
       ) : (
-        <div className="grid-3">
-          {cards.map((card) => (
-            <Link
-              key={card.id}
-              href={`/research/${card.id}`}
-              className="card flex-col justify-between gap-4"
-              style={{ textDecoration: 'none', background: 'var(--bg-elevated)' }}
-            >
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="badge badge-purple">
-                    {card.signals ? card.signals.subject : 'Manual Research'}
-                  </span>
-                  {card.editorial_decision ? (
-                    <span className="badge badge-green">{card.editorial_decision}</span>
-                  ) : card.ai_analysis ? (
-                    <span className="badge badge-amber">AI Analyzed</span>
-                  ) : (
-                    <span className="badge badge-muted">Draft</span>
-                  )}
-                </div>
-
-                <h3 className="font-bold text-primary text-base line-clamp-2" style={{ lineHeight: 1.4 }}>
-                  {card.observation ?? 'Untitled Observation'}
-                </h3>
-                <p className="text-xs text-muted mt-2 line-clamp-2">
-                  {card.thesis ?? card.question ?? 'Click to open research card workspace...'}
-                </p>
-              </div>
-
-              <div className="flex items-center justify-between pt-3 border-t border-subtle text-xs text-muted">
-                <span>Confidence: {card.confidence ? `${card.confidence}/10` : 'Pending'}</span>
-                <span>{formatRelativeTime(card.created_at)}</span>
-              </div>
-            </Link>
-          ))}
-        </div>
+        <ResearchCardList initialCards={cards as any} />
       )}
     </div>
   )

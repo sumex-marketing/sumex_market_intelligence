@@ -17,6 +17,7 @@ import {
   ExternalLink,
   Layers,
   FilePlus,
+  Trash2,
 } from 'lucide-react'
 
 interface SignalFeedWorkspaceProps {
@@ -30,6 +31,11 @@ export default function SignalFeedWorkspace({
 }: SignalFeedWorkspaceProps) {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<'signals' | 'catalysts'>('signals')
+
+  // Local signals state for optimistic updates
+  const [localSignals, setLocalSignals] = useState(signals)
+  const [updatingId, setUpdatingId] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   // Signal Filters
   const [statusFilter, setStatusFilter] = useState<string>('ALL')
@@ -68,6 +74,45 @@ export default function SignalFeedWorkspace({
       alert('Error triggering signal scan')
     } finally {
       setScanning(false)
+    }
+  }
+
+  const handleStatusChange = async (id: string, newStatus: string) => {
+    setUpdatingId(id)
+    try {
+      const res = await fetch(`/api/signals/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      })
+      if (res.ok) {
+        setLocalSignals((prev) =>
+          prev.map((s) => (s.id === id ? { ...s, status: newStatus as any } : s))
+        )
+      } else {
+        alert('Failed to update status')
+      }
+    } catch {
+      alert('Error updating signal status')
+    } finally {
+      setUpdatingId(null)
+    }
+  }
+
+  const handleDeleteSignal = async (id: string, title: string) => {
+    if (!confirm(`Delete "${title}"? This cannot be undone.`)) return
+    setDeletingId(id)
+    try {
+      const res = await fetch(`/api/signals/${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        setLocalSignals((prev) => prev.filter((s) => s.id !== id))
+      } else {
+        alert('Failed to delete signal')
+      }
+    } catch {
+      alert('Error deleting signal')
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -125,7 +170,7 @@ export default function SignalFeedWorkspace({
     }
   }
 
-  const filteredSignals = signals.filter((s) => {
+  const filteredSignals = localSignals.filter((s) => {
     if (statusFilter !== 'ALL' && s.status !== statusFilter) return false
     if (severityFilter !== 'ALL' && s.severity !== severityFilter) return false
     if (searchQuery) {
@@ -509,23 +554,33 @@ export default function SignalFeedWorkspace({
                           </span>
                         </td>
 
-                        {/* Status - human readable */}
+                        {/* Status - inline dropdown */}
                         <td style={{ overflow: 'hidden' }}>
-                          <span
+                          <select
+                            value={sig.status}
+                            disabled={updatingId === sig.id}
+                            onChange={(e) => handleStatusChange(sig.id, e.target.value)}
                             style={{
-                              display: 'inline-block',
-                              padding: '3px 8px',
-                              borderRadius: 6,
-                              fontSize: '0.75rem',
-                              fontWeight: 600,
                               background: statusInfo.bg,
                               color: statusInfo.color,
-                              border: `1px solid ${statusInfo.color}33`,
-                              whiteSpace: 'nowrap',
+                              border: `1px solid ${statusInfo.color}44`,
+                              borderRadius: 6,
+                              fontSize: '0.72rem',
+                              fontWeight: 600,
+                              padding: '3px 6px',
+                              cursor: 'pointer',
+                              outline: 'none',
+                              width: '100%',
+                              opacity: updatingId === sig.id ? 0.5 : 1,
                             }}
                           >
-                            {statusInfo.label}
-                          </span>
+                            <option value="new">New</option>
+                            <option value="investigating">Investigating</option>
+                            <option value="validated">Validated</option>
+                            <option value="content_ready">Content Ready</option>
+                            <option value="published">Published</option>
+                            <option value="rejected">Rejected</option>
+                          </select>
                         </td>
 
                         {/* Trigger evidence */}
@@ -551,13 +606,26 @@ export default function SignalFeedWorkspace({
 
                         {/* Actions */}
                         <td style={{ width: '110px', textAlign: 'right', whiteSpace: 'nowrap' }}>
-                          <Link
-                            href={`/signals/${sig.id}`}
-                            className="btn btn-ghost btn-sm"
-                            style={{ color: '#23F7DD', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.82rem' }}
-                          >
-                            Inspect <ArrowUpRight size={13} />
-                          </Link>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
+                            <Link
+                              href={`/signals/${sig.id}`}
+                              className="btn btn-ghost btn-sm"
+                              style={{ color: '#23F7DD', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.82rem' }}
+                            >
+                              Inspect <ArrowUpRight size={13} />
+                            </Link>
+                            <button
+                              onClick={() => handleDeleteSignal(sig.id, sig.title)}
+                              disabled={deletingId === sig.id}
+                              title="Delete signal"
+                              className="btn btn-ghost btn-sm"
+                              style={{ color: 'var(--red, #ef4444)', padding: '4px 6px' }}
+                            >
+                              {deletingId === sig.id
+                                ? <RefreshCw size={12} className="spin" />
+                                : <Trash2 size={12} />}
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     )}
