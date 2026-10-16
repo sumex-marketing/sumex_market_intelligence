@@ -349,6 +349,7 @@ export interface AppSettings {
     btc_24h_pct: number
     eth_24h_pct: number
     sol_24h_pct: number
+    hype_24h_pct?: number
     btc_dominance_pp: number
     market_cap_24h_pct: number
     volume_change_pct: number

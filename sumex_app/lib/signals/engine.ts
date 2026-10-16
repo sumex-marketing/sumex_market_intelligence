@@ -65,6 +65,7 @@ export async function runSignalScan(): Promise<{ created: number; error: string 
   const btcPct   = thresholds.btc_24h_pct   ?? 4
   const ethPct   = thresholds.eth_24h_pct   ?? 5
   const solPct   = thresholds.sol_24h_pct   ?? 7
+  const hypePct  = (thresholds as any).hype_24h_pct ?? 6
   const domPp    = thresholds.btc_dominance_pp  ?? 0.7
   const mcPct    = thresholds.market_cap_24h_pct ?? 3
   const volPct   = thresholds.volume_change_pct  ?? 25
@@ -104,6 +105,7 @@ export async function runSignalScan(): Promise<{ created: number; error: string 
       let threshold = btcPct
       if (symbol === 'ETH') threshold = ethPct
       else if (symbol === 'SOL') threshold = solPct
+      else if (symbol === 'HYPE') threshold = hypePct
       else threshold = btcPct  // default for other assets
 
       if (Math.abs(change24h) >= threshold) {

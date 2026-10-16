@@ -64,7 +64,8 @@ async function handleNewsSync(request: Request) {
       throw insertErr
     }
 
-    const processedCount = inserted?.length ?? rows.length
+    const newCount = inserted?.length ?? 0
+    const processedCount = rows.length
 
     // Update job run
     if (job?.id) {
@@ -115,7 +116,9 @@ async function handleNewsSync(request: Request) {
 
     return NextResponse.json({
       success: true,
-      records: processedCount,
+      records: newCount > 0 ? newCount : processedCount,
+      newArticles: newCount,
+      totalChecked: processedCount,
       timestamp: now,
     })
   } catch (err: any) {

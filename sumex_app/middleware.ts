@@ -11,9 +11,10 @@ export const config = {
      * Match all request paths except for the ones starting with:
      * - _next/static (static files)
      * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - api routes that use service role (internal cron endpoints)
+     * - favicon.ico, static assets
+     * NOTE: We intentionally include /api/cron and /api/signals so that
+     * browser-triggered sync calls get their session cookies refreshed.
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)|api/cron).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)).*)',
   ],
 }

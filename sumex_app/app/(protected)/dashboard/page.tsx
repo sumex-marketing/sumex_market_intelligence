@@ -166,8 +166,8 @@ export default async function DashboardPage() {
       </div>
 
       {/* Asset Ticker Row */}
-      <div className="grid-3">
-        {['BTC', 'ETH', 'SOL'].map((sym) => {
+      <div className="grid-4">
+        {['BTC', 'ETH', 'SOL', 'HYPE'].map((sym) => {
           const snap = snapshots.find((s: any) => s.symbol === sym)
           const style = ASSET_STYLES[sym] ?? {
             color: '#23F7DD',

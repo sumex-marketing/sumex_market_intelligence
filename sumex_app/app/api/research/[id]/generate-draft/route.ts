@@ -31,14 +31,14 @@ function buildLiveContext(
 
     out += '\n## LIVE ETF FLOW DATA (Last 5 Trading Days)\n'
     for (const [asset, rows] of Object.entries(byAsset)) {
-      out += `\n### ${asset} Spot ETF Flows\n`
-      out += '| Date | Net Flow | Cumulative Total |\n'
-      out += '|------|----------|------------------|\n'
+      out += '\n### ' + asset + ' Spot ETF Flows\n'
+      out += '| Date | Net Flow |\n'
+      out += '|------|----------|\n'
       for (const r of rows.slice(0, 5)) {
-        out += `| ${r.date} | ${fmtM(r.total_net_flow)} | ${fmtM(r.cumulative_total)} |\n`
+        out += `| ${r.date} | ${fmtM(r.net_flow_usd)} |\n`
       }
       // 5-day sum
-      const fiveDaySum = rows.slice(0, 5).reduce((s: number, r: any) => s + (r.total_net_flow ?? 0), 0)
+      const fiveDaySum = rows.slice(0, 5).reduce((s: number, r: any) => s + (r.net_flow_usd ?? 0), 0)
       out += `\n**5-Day Net Flow: ${fmtM(fiveDaySum)}**\n`
     }
   }
@@ -50,10 +50,10 @@ function buildLiveContext(
     out += '|-------|------|----------|----------|--------|\n'
     for (const e of macroEvents.slice(0, 8)) {
       const date = e.event_time_utc ? new Date(e.event_time_utc).toLocaleDateString('en-GB', { month: 'short', day: 'numeric' }) : 'N/A'
-      const forecast = e.forecast_value != null ? e.forecast_value : 'N/A'
-      const previous = e.previous_value != null ? e.previous_value : 'N/A'
-      const impact = e.importance ?? e.impact ?? 'medium'
-      out += `| ${e.event_name ?? e.event_type} | ${date} | ${forecast} | ${previous} | ${impact.toUpperCase()} |\n`
+      const forecast = e.forecast != null ? e.forecast : 'N/A'
+      const previous = e.previous != null ? e.previous : 'N/A'
+      const impact = e.importance ?? 'medium'
+      out += `| ${e.title ?? e.type} | ${date} | ${forecast} | ${previous} | ${impact.toUpperCase()} |\n`
     }
   }
 
@@ -165,11 +165,11 @@ function generateStructuredFallback(
   // Build live snippets
   const latestEtfRow = etfTotals[0]
   const etfSnippet = latestEtfRow
-    ? `- ${latestEtfRow.asset ?? 'BTC'} ETF Net Flow (${latestEtfRow.date}): ${fmtM(latestEtfRow.total_net_flow)}`
+    ? `- ${latestEtfRow.asset ?? 'BTC'} ETF Net Flow (${latestEtfRow.date}): ${fmtM(latestEtfRow.net_flow_usd)}`
     : null
   const nextEvent = macroEvents[0]
   const macroSnippet = nextEvent
-    ? `- Upcoming: **${nextEvent.event_name ?? nextEvent.event_type}** - ${nextEvent.event_time_utc ? new Date(nextEvent.event_time_utc).toLocaleDateString('en-GB', { month: 'short', day: 'numeric' }) : 'TBD'}`
+    ? `- Upcoming: **${nextEvent.title ?? nextEvent.type}** - ${nextEvent.event_time_utc ? new Date(nextEvent.event_time_utc).toLocaleDateString('en-GB', { month: 'short', day: 'numeric' }) : 'TBD'}`
     : null
 
   const liveDataLines = [etfSnippet, macroSnippet].filter(Boolean).join('\n')
@@ -242,13 +242,13 @@ export async function POST(
   const [etfTotalsRes, macroEventsRes] = await Promise.all([
     supabase
       .from('etf_daily_totals')
-      .select('date, asset, total_net_flow, cumulative_total')
+      .select('date, asset, net_flow_usd')
       .order('date', { ascending: false })
       .order('asset', { ascending: true })
       .limit(20), // last ~10 trading days per asset
     supabase
       .from('macro_events')
-      .select('event_name, event_type, event_time_utc, forecast_value, previous_value, importance, actual_value')
+      .select('title, type, event_time_utc, forecast, previous, importance, actual')
       .in('status', ['upcoming', 'planned'])
       .gte('event_time_utc', now)
       .lte('event_time_utc', sevenDaysAhead)

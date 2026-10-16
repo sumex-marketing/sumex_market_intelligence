@@ -1,6 +1,6 @@
 # Sumex Market Intelligence Desk
 
-An internal market intelligence desk for Sumex that continuously monitors crypto market movements, macroeconomic event releases, US spot ETF flows, and breaking crypto catalysts — detecting meaningful anomalies, organizing them into structured research cards, and formulating AI-assisted editorial drafts.
+An internal market intelligence desk for Sumex that continuously monitors crypto market movements, macroeconomic event releases, US spot ETF flows, and breaking crypto catalysts - detecting meaningful anomalies, organizing them into structured research cards, and formulating AI-assisted editorial drafts.
 
 ![Sumex Logo](public/sumex_logo.png)
 
@@ -17,7 +17,7 @@ An internal market intelligence desk for Sumex that continuously monitors crypto
 
 | Route | Workspace | Purpose |
 | :--- | :--- | :--- |
-| [`/dashboard`](app/(protected)/dashboard) | **Intelligence Dashboard** | 30-second situational awareness: BTC/ETH/SOL spot tickers, global market cap & dominance, ETF daily net strip, open signals, macro releases, data feed health. |
+| [`/dashboard`](app/(protected)/dashboard) | **Intelligence Dashboard** | 30-second situational awareness: BTC/ETH/SOL/HYPE spot tickers, global market cap & dominance, ETF daily net strip, open signals, macro releases, data feed health. |
 | [`/market`](app/(protected)/market) | **Market Overview Desk** | Multi-timeframe deltas (1h, 24h, 7d), sector/narrative momentum tracker, searchable watchlist, immutable snapshot audit log. |
 | [`/signals`](app/(protected)/signals) | **Signal Feed & Catalysts Wire** | Algorithmic threshold scanner, multi-factor scoring (magnitude, abnormality, confirmation), and breaking news wire (Cointelegraph, Decrypt, The Block) with one-click research card generation. |
 | [`/research`](app/(protected)/research) | **Research Workspace** | Observation, thesis formulation, verified facts, contradicting evidence, confidence rating, invalidation criteria, and AI Draft Engine. |
@@ -65,8 +65,9 @@ Visit [http://localhost:3000](http://localhost:3000).
 ## ⏱️ Automated Background Ingestion (Vercel Crons & In-App Sync)
 
 Configured in [`vercel.json`](vercel.json):
-* **`/api/cron/fetch-market-data`**: Runs every 5 minutes (`*/5 * * * *`) — Ingests live prices, volume, & triggers signal evaluation
-* **`/api/signals/scan`**: Runs every 5 minutes (`*/5 * * * *`) — High-frequency threshold anomaly evaluation
-* **`/api/cron/fetch-news`**: Runs every 15 minutes (`*/15 * * * *`) — Ingests breaking RSS crypto headlines
+* **`/api/cron/fetch-market-data`**: Runs every 5 minutes (`*/5 * * * *`) - Ingests live prices, volume, & triggers signal evaluation
+* **`/api/signals/scan`**: Runs every 5 minutes (`*/5 * * * *`) - High-frequency threshold anomaly evaluation
+* **`/api/cron/fetch-news`**: Runs every 15 minutes (`*/15 * * * *`) - Ingests breaking RSS crypto headlines
 * **`/api/cron/fetch-etf-flows`**: Runs 3x daily during market hours (`0 14,18,22 * * 1-5`)
 * **In-App Auto-Sync**: The application shell includes an active client-side auto-sync engine with configurable intervals (1m, 2m, 3m, 5m, or Paused) with live countdown & force-sync controls.
+

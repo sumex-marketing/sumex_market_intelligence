@@ -19,7 +19,7 @@ export default function DashboardQuickActions({
     setSyncing(true)
     setNotice(null)
     try {
-      const res = await fetch('/api/cron/fetch-market-data', { method: 'POST' })
+      const res = await fetch('/api/cron/fetch-market-data', { method: 'POST', credentials: 'include' })
       const data = await res.json()
       if (data.success) {
         setNotice(`Prices synced: ${data.records ?? 0} updated`)
@@ -39,7 +39,7 @@ export default function DashboardQuickActions({
     setScanning(true)
     setNotice(null)
     try {
-      const res = await fetch('/api/signals/scan', { method: 'POST' })
+      const res = await fetch('/api/signals/scan', { method: 'POST', credentials: 'include' })
       const data = await res.json()
       if (data.success) {
         setNotice(`Scan done: ${data.signalsCreated ?? 0} signals`)

@@ -100,4 +100,4 @@ export async function fetchGlobalMetrics(): Promise<{
  * Default watchlist CoinGecko IDs.
  * These are the core assets we always track.
  */
-export const DEFAULT_COINGECKO_IDS = ['bitcoin', 'ethereum', 'solana']
+export const DEFAULT_COINGECKO_IDS = ['bitcoin', 'ethereum', 'solana', 'hyperliquid']

@@ -38,6 +38,7 @@ const ASSET_THEMES: Record<string, { color: string; bg: string; label: string }>
   BTC: { color: '#F7931A', bg: 'rgba(247,147,26,0.12)', label: 'Bitcoin' },
   ETH: { color: '#627EEA', bg: 'rgba(98,126,234,0.12)', label: 'Ethereum' },
   SOL: { color: '#9945FF', bg: 'rgba(153,69,255,0.12)', label: 'Solana' },
+  HYPE: { color: '#23F7DD', bg: 'rgba(35,247,221,0.12)', label: 'Hyperliquid' },
 }
 
 const SECTOR_DATA = [
@@ -46,7 +47,7 @@ const SECTOR_DATA = [
     sentiment: 'Bullish',
     sentimentColor: '#22c55e',
     change24h: '+4.2%',
-    dominantAsset: 'BTC, ETH, SOL',
+    dominantAsset: 'BTC, ETH, SOL, HYPE',
     description: 'Foundational smart contract and settlement networks.',
   },
   {
@@ -90,7 +91,7 @@ export default function MarketDeskWorkspace({
     setSyncing(true)
     setSyncNotice(null)
     try {
-      const res = await fetch('/api/cron/fetch-market-data', { method: 'POST' })
+      const res = await fetch('/api/cron/fetch-market-data', { method: 'POST', credentials: 'include' })
       const data = await res.json()
       if (data.success) {
         setSyncNotice(`Market synced: ${data.records ?? 0} assets updated`)
@@ -151,9 +152,9 @@ export default function MarketDeskWorkspace({
         </div>
       </div>
 
-      {/* Primary Asset Cards (BTC, ETH, SOL) */}
-      <div className="grid-3">
-        {['BTC', 'ETH', 'SOL'].map((sym) => {
+      {/* Primary Asset Cards (BTC, ETH, SOL, HYPE) */}
+      <div className="grid-4">
+        {['BTC', 'ETH', 'SOL', 'HYPE'].map((sym) => {
           const snap = snapshots.find((s) => s.symbol === sym)
           const theme = ASSET_THEMES[sym] ?? {
             color: '#23F7DD',

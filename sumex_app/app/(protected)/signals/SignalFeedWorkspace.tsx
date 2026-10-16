@@ -57,7 +57,7 @@ export default function SignalFeedWorkspace({
   const handleRunScan = async () => {
     setScanning(true)
     try {
-      const res = await fetch('/api/signals/scan', { method: 'POST' })
+      const res = await fetch('/api/signals/scan', { method: 'POST', credentials: 'include' })
       const data = await res.json()
       if (data.success) {
         router.refresh()
@@ -75,7 +75,7 @@ export default function SignalFeedWorkspace({
     setSyncingNews(true)
     setNewsNotice(null)
     try {
-      const res = await fetch('/api/cron/fetch-news', { method: 'POST' })
+      const res = await fetch('/api/cron/fetch-news', { method: 'POST', credentials: 'include' })
       const data = await res.json()
       if (data.success) {
         setNewsNotice(`Ingested ${data.records ?? 0} stories`)

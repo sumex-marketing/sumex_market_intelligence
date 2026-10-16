@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { MacroEvent, MacroEventType, MacroImportance } from '@/lib/types'
 import {
@@ -15,6 +15,7 @@ import {
   Layers,
 } from 'lucide-react'
 import CryptoIcon from '@/app/components/CryptoIcon'
+import { createClient } from '@/lib/supabase/client'
 
 interface MacroCalendarWorkspaceProps {
   events: MacroEvent[]
@@ -58,9 +59,54 @@ export default function MacroCalendarWorkspace({
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingEvent, setEditingEvent] = useState<MacroEvent | null>(null)
   const [loading, setLoading] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const [syncingEtf, setSyncingEtf] = useState(false)
   const [syncingMacro, setSyncingMacro] = useState(false)
   const [selectedEtfAsset, setSelectedEtfAsset] = useState<'ALL' | 'BTC' | 'ETH' | 'SOL' | 'HYPE'>('ALL')
+
+  // Local events state — kept in sync via Supabase Realtime
+  const [localEvents, setLocalEvents] = useState<MacroEvent[]>(events)
+  const [realtimeConnected, setRealtimeConnected] = useState(false)
+
+  // Sync if the server re-fetches new data (e.g. after router.refresh())
+  useEffect(() => {
+    setLocalEvents(events)
+  }, [events])
+
+  // Supabase Realtime subscription for macro_events
+  useEffect(() => {
+    const supabase = createClient()
+    const channel = supabase
+      .channel('macro-events-live')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'macro_events' },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setLocalEvents((prev) => {
+              // Avoid duplicates (e.g. after router.refresh() race)
+              if (prev.some((e) => e.id === (payload.new as MacroEvent).id)) return prev
+              return [...prev, payload.new as MacroEvent].sort(
+                (a, b) => new Date(a.event_time_utc).getTime() - new Date(b.event_time_utc).getTime()
+              )
+            })
+          } else if (payload.eventType === 'UPDATE') {
+            setLocalEvents((prev) =>
+              prev.map((e) => (e.id === (payload.new as MacroEvent).id ? (payload.new as MacroEvent) : e))
+            )
+          } else if (payload.eventType === 'DELETE') {
+            setLocalEvents((prev) => prev.filter((e) => e.id !== (payload.old as { id: string }).id))
+          }
+        }
+      )
+      .subscribe((status) => {
+        setRealtimeConnected(status === 'SUBSCRIBED')
+      })
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
 
   // New Event Form State
   const [type, setType] = useState<MacroEventType>('CPI')
@@ -140,16 +186,31 @@ export default function MacroCalendarWorkspace({
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this event?')) return
-    await fetch(`/api/macro/${id}`, { method: 'DELETE' })
-    router.refresh()
+  const handleDelete = async (id: string, title: string) => {
+    if (!confirm(`Delete "${title}"? This cannot be undone.`)) return
+    setDeletingId(id)
+    try {
+      const res = await fetch(`/api/macro/${id}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        alert(`Failed to delete event: ${data.error ?? res.statusText}`)
+        return
+      }
+      router.refresh()
+    } catch {
+      alert('Error deleting event')
+    } finally {
+      setDeletingId(null)
+    }
   }
 
   const handleSyncEtfFlows = async () => {
     setSyncingEtf(true)
     try {
-      const res = await fetch('/api/cron/fetch-etf-flows')
+      const res = await fetch('/api/cron/fetch-etf-flows', {
+        method: 'POST',
+        credentials: 'include',
+      })
       const data = await res.json()
       if (data.success) {
         router.refresh()
@@ -166,9 +227,21 @@ export default function MacroCalendarWorkspace({
   const handleSyncMacroEvents = async () => {
     setSyncingMacro(true)
     try {
-      const res = await fetch('/api/cron/fetch-macro-events')
+      const res = await fetch('/api/cron/fetch-macro-events', {
+        method: 'POST',
+        credentials: 'include',
+      })
       const data = await res.json()
       if (data.success) {
+        // Fetch fresh events directly to guarantee the UI updates immediately
+        // (router.refresh() alone can sometimes not re-propagate props in App Router)
+        const eventsRes = await fetch('/api/macro', { credentials: 'include' })
+        if (eventsRes.ok) {
+          const { data: freshEvents } = await eventsRes.json()
+          if (Array.isArray(freshEvents)) {
+            setLocalEvents(freshEvents)
+          }
+        }
         router.refresh()
       } else if (data.error?.includes('FMP_API_KEY')) {
         alert(
@@ -229,7 +302,21 @@ export default function MacroCalendarWorkspace({
             }}
           >
             <Calendar size={14} style={{ display: 'inline', marginRight: 6 }} />
-            Macro Calendar ({events.length})
+            Macro Calendar ({localEvents.length})
+            <span
+              title={realtimeConnected ? 'Live — auto-updating' : 'Connecting to live feed…'}
+              style={{
+                display: 'inline-block',
+                width: 7,
+                height: 7,
+                borderRadius: '50%',
+                background: realtimeConnected ? '#23F7DD' : '#888',
+                marginLeft: 7,
+                verticalAlign: 'middle',
+                boxShadow: realtimeConnected ? '0 0 6px #23F7DD' : 'none',
+                animation: realtimeConnected ? 'pulse-dot 2s infinite' : 'none',
+              }}
+            />
           </button>
           <button
             onClick={() => setActiveTab('etf')}
@@ -275,7 +362,7 @@ export default function MacroCalendarWorkspace({
       {/* ── Tab 1: Macro Calendar ── */}
       {activeTab === 'calendar' && (
         <>
-          {events.length === 0 ? (
+          {localEvents.length === 0 ? (
             <div className="card empty-state">
               <Calendar className="empty-state-icon" />
               <div className="empty-state-title">No Macro Events Scheduled</div>
@@ -301,7 +388,7 @@ export default function MacroCalendarWorkspace({
                     </tr>
                   </thead>
                   <tbody>
-                    {events.map((ev) => (
+                    {localEvents.map((ev) => (
                       <tr key={ev.id}>
                         <td className="td-mono text-xs font-semibold text-primary">
                           {new Date(ev.event_time_utc).toUTCString().replace(' GMT', '')}
@@ -336,8 +423,17 @@ export default function MacroCalendarWorkspace({
                             >
                               <Edit2 size={13} /> Result
                             </button>
-                            <button onClick={() => handleDelete(ev.id)} className="btn btn-ghost btn-sm text-red">
-                              <Trash2 size={13} />
+                            <button
+                              onClick={() => handleDelete(ev.id, ev.title)}
+                              className="btn btn-ghost btn-sm text-red"
+                              disabled={deletingId === ev.id}
+                              title="Delete this macro event"
+                            >
+                              {deletingId === ev.id ? (
+                                <RefreshCw size={13} className="spin" />
+                              ) : (
+                                <Trash2 size={13} />
+                              )}
                             </button>
                           </div>
                         </td>

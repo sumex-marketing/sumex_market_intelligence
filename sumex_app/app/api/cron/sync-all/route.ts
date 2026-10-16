@@ -159,7 +159,7 @@ async function syncMarketData(
     const assetMap = new Map((dbAssets ?? []).map((a: { id: string; coingecko_id: string | null }) => [a.coingecko_id, a.id]))
     const snapshotRows = cgRes.data
       .map((c) => ({
-        asset_id: assetMap.get(c.id) ?? dbAssets?.[0]?.id,
+        asset_id: assetMap.get(c.id),
         timestamp: now,
         price_usd: c.current_price,
         change_1h: c.price_change_percentage_1h_in_currency,
@@ -171,7 +171,7 @@ async function syncMarketData(
         source_timestamp: c.last_updated,
         fetched_at: now,
       }))
-      .filter((r) => r.asset_id != null)
+      .filter((r): r is typeof r & { asset_id: string } => r.asset_id != null)
 
     if (snapshotRows.length > 0) {
       await supabase.from('market_snapshots').insert(snapshotRows)
@@ -235,8 +235,8 @@ async function syncNews(
       .select('id')
 
     if (insertErr) throw insertErr
-
-    const processedCount = inserted?.length ?? rows.length
+    const newCount = inserted?.length ?? 0
+    const processedCount = rows.length
 
     // Update source health for Crypto News Wire
     const { data: existingSource } = await supabase
@@ -273,7 +273,7 @@ async function syncNews(
         })
     }
 
-    return { success: true, records: processedCount }
+    return { success: true, records: newCount > 0 ? newCount : processedCount }
   } catch (err: any) {
     return { success: false, records: 0, error: err?.message ?? 'News sync failed' }
   }

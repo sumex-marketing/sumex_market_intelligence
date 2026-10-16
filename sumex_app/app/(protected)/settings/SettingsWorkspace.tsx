@@ -73,7 +73,7 @@ export default function SettingsWorkspace({
           : type === 'market'
           ? '/api/cron/fetch-market-data'
           : '/api/cron/fetch-etf-flows'
-      const res = await fetch(endpoint, { method: 'POST' })
+      const res = await fetch(endpoint, { method: 'POST', credentials: 'include' })
       const data = await res.json()
       if (data.success) {
         alert(
@@ -269,7 +269,7 @@ export default function SettingsWorkspace({
           </div>
         </div>
 
-        <div className="grid-3">
+        <div className="grid-4">
           <div className="form-group">
             <label className="form-label">BTC 24h Threshold (% move)</label>
             <input
@@ -308,6 +308,20 @@ export default function SettingsWorkspace({
                 setThresholds({
                   ...thresholds,
                   sol_24h_pct: e.target.value === '' ? 0 : parseFloat(e.target.value),
+                })
+              }
+            />
+          </div>
+          <div className="form-group">
+            <label className="form-label">HYPE 24h Threshold (% move)</label>
+            <input
+              type="number"
+              className="form-input"
+              value={(thresholds as any).hype_24h_pct == null || isNaN((thresholds as any).hype_24h_pct) ? '' : (thresholds as any).hype_24h_pct}
+              onChange={(e) =>
+                setThresholds({
+                  ...thresholds,
+                  hype_24h_pct: e.target.value === '' ? 0 : parseFloat(e.target.value),
                 })
               }
             />

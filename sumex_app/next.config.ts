@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Faster RSC serialization — reduces time-to-first-byte on route transitions
+  // Faster RSC serialization - reduces time-to-first-byte on route transitions
   experimental: {
     // Optimise server action bundles (Next 16+)
     optimizeServerReact: true,

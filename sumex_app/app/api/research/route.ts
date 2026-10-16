@@ -27,7 +27,7 @@ export async function POST(request: Request) {
   const [snapshotsRes, macroRes, etfRes] = await Promise.all([
     supabase.from('latest_market_snapshots').select('*'),
     supabase.from('macro_events').select('*').order('event_time_utc', { ascending: false }).limit(5),
-    supabase.from('etf_daily_totals').select('*').limit(10),
+    supabase.from('etf_daily_totals').select('*').order('date', { ascending: false }).limit(10),
   ])
 
   const { data, error } = await supabase

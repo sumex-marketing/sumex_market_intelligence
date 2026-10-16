@@ -36,15 +36,20 @@ async function handleMacroSync(request: Request) {
     let upserted = 0
 
     if (events.length > 0) {
-      // Upsert based on type + event_time_utc (unique constraint)
-      // We don't blindly overwrite actuals the user may have manually corrected
+      // Upsert based on type + title + event_time_utc
+      // Using title in the match prevents events like "CPI m/m" and "CPI y/y"
+      // (same type, same hour) from being treated as duplicates of each other.
       for (const ev of events) {
+        const windowStart = new Date(new Date(ev.event_time_utc).getTime() - 3600_000).toISOString()
+        const windowEnd = new Date(new Date(ev.event_time_utc).getTime() + 3600_000).toISOString()
+
         const { data: existing } = await supabase
           .from('macro_events')
           .select('id, actual, status')
           .eq('type', ev.type)
-          .gte('event_time_utc', new Date(new Date(ev.event_time_utc).getTime() - 3600_000).toISOString())
-          .lte('event_time_utc', new Date(new Date(ev.event_time_utc).getTime() + 3600_000).toISOString())
+          .eq('title', ev.title)
+          .gte('event_time_utc', windowStart)
+          .lte('event_time_utc', windowEnd)
           .maybeSingle()
 
         if (existing) {
