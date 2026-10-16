@@ -87,7 +87,7 @@ export default function MacroCalendarWorkspace({
               // Avoid duplicates (e.g. after router.refresh() race)
               if (prev.some((e) => e.id === (payload.new as MacroEvent).id)) return prev
               return [...prev, payload.new as MacroEvent].sort(
-                (a, b) => new Date(a.event_time_utc).getTime() - new Date(b.event_time_utc).getTime()
+                (a, b) => new Date(b.event_time_utc).getTime() - new Date(a.event_time_utc).getTime()
               )
             })
           } else if (payload.eventType === 'UPDATE') {

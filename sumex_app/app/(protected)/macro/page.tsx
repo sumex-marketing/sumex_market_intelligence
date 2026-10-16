@@ -16,7 +16,7 @@ export default async function MacroCalendarPage({
     supabase
       .from('macro_events')
       .select('*')
-      .order('event_time_utc', { ascending: true }),
+      .order('event_time_utc', { ascending: false }),
     supabase
       .from('etf_daily_totals')
       .select('*')
