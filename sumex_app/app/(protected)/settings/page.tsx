@@ -21,9 +21,8 @@ export default async function SettingsPage() {
 
   const serviceClient = createServiceClient()
 
-  const [settingsRes, sourcesRes, usersRes, assetsRes] = await Promise.all([
+  const [settingsRes, usersRes, assetsRes] = await Promise.all([
     serviceClient.from('app_settings').select('*'),
-    serviceClient.from('source_health').select('*'),
     serviceClient.from('user_profiles').select('*').order('created_at', { ascending: false }),
     serviceClient.from('assets').select('*').order('sort_order', { ascending: true }),
   ])
@@ -44,7 +43,6 @@ export default async function SettingsPage() {
 
       <SettingsWorkspace
         settings={settingsRes.data ?? []}
-        sources={sourcesRes.data ?? []}
         users={usersRes.data ?? []}
         assets={assetsRes.data ?? []}
       />

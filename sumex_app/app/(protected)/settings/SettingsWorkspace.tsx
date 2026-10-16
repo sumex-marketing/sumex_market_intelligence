@@ -3,16 +3,14 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { UserProfile, UserRole } from '@/lib/types'
-import { Sliders, Shield, RefreshCw, Database, Users, Activity } from 'lucide-react'
+import { Sliders, Shield, RefreshCw, Database, Users } from 'lucide-react'
 
 export default function SettingsWorkspace({
   settings,
-  sources,
   users,
   assets = [],
 }: {
   settings: any[]
-  sources: any[]
   users: UserProfile[]
   assets?: any[]
 }) {
@@ -152,90 +150,6 @@ export default function SettingsWorkspace({
           >
             {syncing === 'etf' ? 'Scraping Farside...' : 'Sync ETF Flows Only'}
           </button>
-        </div>
-      </div>
-
-      {/* Ingestion Data Feeds & Pipeline Health */}
-      <div className="card flex-col gap-4">
-        <div className="card-header flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Activity className="text-cyan" size={18} color="#23F7DD" />
-            <span className="card-title" style={{ color: 'var(--text-primary)' }}>
-              Data Ingestion Pipelines & Feed Health ({sources.length})
-            </span>
-          </div>
-          <button
-            onClick={() => handleManualSync('market')}
-            className="btn btn-ghost btn-sm"
-            style={{ color: '#23F7DD' }}
-            disabled={syncing != null}
-          >
-            <RefreshCw size={13} className={syncing ? 'spin' : ''} />
-            <span>Refresh Status</span>
-          </button>
-        </div>
-
-        <div className="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th>Pipeline Source</th>
-                <th>Type</th>
-                <th>Status</th>
-                <th>Data Freshness</th>
-                <th>Last Response</th>
-                <th>Last Success (UTC)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sources.map((src: any) => {
-                const isHealthy = src.health_status === 'healthy'
-                const isStale = src.health_status === 'stale'
-                const dotColor = isHealthy ? '#22c55e' : isStale ? '#eab308' : '#ef4444'
-                return (
-                  <tr key={src.id}>
-                    <td>
-                      <div className="flex items-center gap-2">
-                        <span
-                          style={{
-                            width: '8px',
-                            height: '8px',
-                            borderRadius: '50%',
-                            backgroundColor: dotColor,
-                            boxShadow: `0 0 8px ${dotColor}`,
-                          }}
-                        />
-                        <span className="font-semibold text-primary">{src.name}</span>
-                      </div>
-                    </td>
-                    <td>
-                      <span className="badge badge-purple uppercase text-[10px]">
-                        {src.type}
-                      </span>
-                    </td>
-                    <td>
-                      <span className={`badge badge-${src.health_status}`}>
-                        {src.health_status}
-                      </span>
-                    </td>
-                    <td className="text-xs text-muted">
-                      {src.data_age_minutes != null
-                        ? src.data_age_minutes < 1
-                          ? 'Real-time (< 1m)'
-                          : `${Math.round(src.data_age_minutes)} mins ago`
-                        : 'N/A'}
-                    </td>
-                    <td className="td-mono text-xs font-semibold" style={{ color: src.last_http_status === 200 ? '#22c55e' : '#f87171' }}>
-                      {src.last_http_status ? `${src.last_http_status} OK` : 'N/A'}
-                    </td>
-                    <td className="td-mono text-xs text-muted">
-                      {src.last_success_at ? new Date(src.last_success_at).toUTCString() : 'N/A'}
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
         </div>
       </div>
 
