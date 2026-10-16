@@ -868,6 +868,11 @@ export default async function DashboardPage() {
                 <span style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-primary)' }}>
                   Data Feed Health
                 </span>
+                {sources.length > 0 && (
+                  <span className="badge badge-muted" style={{ fontSize: '0.7rem' }}>
+                    {sources.filter((s: any) => s.health_status === 'healthy').length}/{sources.length} healthy
+                  </span>
+                )}
               </div>
               <Link
                 href="/settings"
@@ -878,60 +883,66 @@ export default async function DashboardPage() {
                 Configure →
               </Link>
             </div>
-            {sources.length === 0 ? (
-              <div style={{ padding: '18px', fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center' }}>
-                No ingestion sources configured.
-              </div>
-            ) : (
-              sources.map((src: any, idx: number) => {
-                const isHealthy = src.health_status === 'healthy'
-                const isStale = src.health_status === 'stale'
-                const statusColor = isHealthy ? '#22c55e' : isStale ? '#eab308' : '#ef4444'
-                const typeLabel =
-                  src.type === 'market_data'
-                    ? 'API'
-                    : src.type === 'etf'
-                    ? 'ETF'
-                    : src.type === 'macro'
-                    ? 'Macro'
-                    : 'Engine'
 
-                const ageText =
-                  src.data_age_minutes != null
-                    ? src.data_age_minutes < 1
-                      ? 'Live (< 1m)'
-                      : `${Math.round(src.data_age_minutes)}m ago`
-                    : 'Active'
+            {/* Scrollable source list — capped so it never dominates the dashboard */}
+            <div style={{ maxHeight: '220px', overflowY: 'auto' }}>
+              {sources.length === 0 ? (
+                <div style={{ padding: '18px', fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center' }}>
+                  No ingestion sources configured.
+                </div>
+              ) : (
+                sources.map((src: any, idx: number) => {
+                  const isHealthy = src.health_status === 'healthy'
+                  const isStale = src.health_status === 'stale'
+                  const statusColor = isHealthy ? '#22c55e' : isStale ? '#eab308' : '#ef4444'
+                  const typeLabel =
+                    src.type === 'market_data'
+                      ? 'API'
+                      : src.type === 'etf'
+                      ? 'ETF'
+                      : src.type === 'macro'
+                      ? 'Macro'
+                      : 'Engine'
 
-                return (
-                  <div
-                    key={src.id}
-                    className="flex items-center justify-between"
-                    style={{
-                      padding: '12px 18px',
-                      fontSize: '0.8rem',
-                      borderBottom:
-                        idx < sources.length - 1 ? '1px solid var(--border-subtle)' : 'none',
-                    }}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <span
-                        style={{
-                          width: '8px',
-                          height: '8px',
-                          borderRadius: '50%',
-                          backgroundColor: statusColor,
-                          boxShadow: `0 0 8px ${statusColor}`,
-                        }}
-                      />
-                      <div className="flex flex-col">
-                        <div className="flex items-center gap-1.5">
+                  const ageText =
+                    src.data_age_minutes != null
+                      ? src.data_age_minutes < 1
+                        ? 'Live (< 1m)'
+                        : `${Math.round(src.data_age_minutes)}m ago`
+                      : 'Active'
+
+                  return (
+                    <div
+                      key={src.id}
+                      className="flex items-center justify-between"
+                      style={{
+                        padding: '8px 18px',
+                        fontSize: '0.8rem',
+                        borderBottom:
+                          idx < sources.length - 1 ? '1px solid var(--border-subtle)' : 'none',
+                      }}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span
+                          style={{
+                            width: '7px',
+                            height: '7px',
+                            flexShrink: 0,
+                            borderRadius: '50%',
+                            backgroundColor: statusColor,
+                            boxShadow: `0 0 6px ${statusColor}`,
+                          }}
+                        />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                           <span style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: '0.82rem' }}>
                             {src.name}
                           </span>
                           <span
-                            className="font-mono text-[10px] px-1.5 py-0.2 rounded"
+                            className="font-mono"
                             style={{
+                              fontSize: '0.68rem',
+                              padding: '1px 5px',
+                              borderRadius: 4,
                               background: 'rgba(255,255,255,0.06)',
                               color: 'var(--text-muted)',
                               border: '1px solid rgba(255,255,255,0.08)',
@@ -939,23 +950,24 @@ export default async function DashboardPage() {
                           >
                             {typeLabel}
                           </span>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                            {ageText}{src.last_http_status ? ` · ${src.last_http_status} OK` : ''}
+                          </span>
                         </div>
-                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 2 }}>
-                          {ageText} {src.last_http_status ? `· ${src.last_http_status} OK` : ''}
-                        </span>
                       </div>
-                    </div>
 
-                    <span className={`badge badge-${src.health_status}`}>
-                      {src.health_status}
-                    </span>
-                  </div>
-                )
-              })
-            )}
+                      <span className={`badge badge-${src.health_status}`} style={{ flexShrink: 0 }}>
+                        {src.health_status}
+                      </span>
+                    </div>
+                  )
+                })
+              )}
+            </div>
           </div>
         </div>
       </div>
     </div>
   )
 }
+
