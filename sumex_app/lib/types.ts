@@ -61,7 +61,13 @@ export type EvidenceType = 'market_metric' | 'macro_data' | 'etf_flow' | 'news' 
 export type MacroEventType =
   | 'CPI' | 'CORE_CPI' | 'PCE' | 'CORE_PCE'
   | 'FOMC' | 'NFP' | 'PPI' | 'GDP'
-  | 'RATE_DECISION' | 'FOMC_MINUTES' | 'FOMC_PRESSER' | 'OTHER'
+  | 'RATE_DECISION' | 'FOMC_MINUTES' | 'FOMC_PRESSER'
+  | 'RETAIL_SALES' | 'CORE_RETAIL_SALES'
+  | 'UNEMPLOYMENT_CLAIMS' | 'ADP_EMPLOYMENT'
+  | 'ISM_MANUFACTURING' | 'ISM_SERVICES'
+  | 'CONSUMER_CONFIDENCE' | 'CONSUMER_SENTIMENT'
+  | 'JOLTS' | 'TRADE_BALANCE'
+  | 'OTHER'
 
 export type MacroEventStatus = 'planned' | 'upcoming' | 'released' | 'reaction_recorded' | 'archived'
 export type MacroImportance = 'high' | 'medium' | 'low'
@@ -446,5 +452,15 @@ export const MACRO_EVENT_TYPE_LABELS: Record<MacroEventType, string> = {
   RATE_DECISION: 'Rate Decision',
   FOMC_MINUTES: 'FOMC Minutes',
   FOMC_PRESSER: 'FOMC Press Conference',
+  RETAIL_SALES: 'Retail Sales',
+  CORE_RETAIL_SALES: 'Core Retail Sales',
+  UNEMPLOYMENT_CLAIMS: 'Unemployment Claims',
+  ADP_EMPLOYMENT: 'ADP Employment',
+  ISM_MANUFACTURING: 'ISM Manufacturing',
+  ISM_SERVICES: 'ISM Services',
+  CONSUMER_CONFIDENCE: 'Consumer Confidence',
+  CONSUMER_SENTIMENT: 'Consumer Sentiment',
+  JOLTS: 'JOLTS Job Openings',
+  TRADE_BALANCE: 'Trade Balance',
   OTHER: 'Other',
 }

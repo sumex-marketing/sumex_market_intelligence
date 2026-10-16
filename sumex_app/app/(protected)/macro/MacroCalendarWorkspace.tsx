@@ -175,7 +175,7 @@ export default function MacroCalendarWorkspace({
         setEditingEvent(null)
         setActual('')
         setReactionNote('')
-        router.refresh()
+        // Realtime subscription will update the row automatically — no need for router.refresh()
       } else {
         alert('Failed to update event')
       }
@@ -196,7 +196,8 @@ export default function MacroCalendarWorkspace({
         alert(`Failed to delete event: ${data.error ?? res.statusText}`)
         return
       }
-      router.refresh()
+      // Realtime subscription handles removing the row from localEvents — no router.refresh() needed
+      setLocalEvents((prev) => prev.filter((e) => e.id !== id))
     } catch {
       alert('Error deleting event')
     } finally {
@@ -382,7 +383,7 @@ export default function MacroCalendarWorkspace({
                       <th>Importance</th>
                       <th>Previous</th>
                       <th>Forecast</th>
-                      <th>Actual</th>
+                      <th title="The released value of the economic indicator once published">Released Value</th>
                       <th>Status</th>
                       <th>Actions</th>
                     </tr>
@@ -403,12 +404,30 @@ export default function MacroCalendarWorkspace({
                         <td className="td-mono text-muted">{ev.previous ?? 'N/A'}</td>
                         <td className="td-mono text-muted">{ev.forecast ?? 'N/A'}</td>
                         <td className="td-mono font-bold" style={{ color: ev.actual ? '#23F7DD' : undefined }}>
-                          {ev.actual ?? <span className="text-muted font-normal italic">Pending</span>}
+                          {ev.actual
+                            ? ev.actual
+                            : new Date(ev.event_time_utc) < new Date()
+                            ? <span className="text-muted font-normal italic" title="Event has passed — actual not captured by auto-sync">Not recorded</span>
+                            : <span className="text-muted font-normal italic">Pending</span>
+                          }
                         </td>
                         <td>
-                          <span className={`badge ${ev.status === 'released' ? 'badge-green' : 'badge-muted'}`}>
-                            {ev.status}
-                          </span>
+                          {(() => {
+                            const s = ev.status
+                            const cls =
+                              s === 'released' || s === 'reaction_recorded'
+                                ? 'badge-green'
+                                : s === 'upcoming'
+                                ? 'badge-purple'
+                                : s === 'archived'
+                                ? 'badge-muted'
+                                : 'badge-muted'
+                            const label =
+                              s === 'reaction_recorded'
+                                ? 'recorded'
+                                : s
+                            return <span className={`badge ${cls}`}>{label}</span>
+                          })()}
                         </td>
                         <td>
                           <div className="flex items-center gap-2">
@@ -1059,20 +1078,30 @@ export default function MacroCalendarWorkspace({
                 onChange={(e) => setType(e.target.value as any)}
               >
                 {[
-                  'CPI',
-                  'CORE_CPI',
-                  'PCE',
-                  'CORE_PCE',
-                  'FOMC',
-                  'NFP',
-                  'PPI',
-                  'GDP',
-                  'RATE_DECISION',
-                  'OTHER',
-                ].map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
+                  { v: 'CPI', l: 'CPI' },
+                  { v: 'CORE_CPI', l: 'Core CPI' },
+                  { v: 'PCE', l: 'PCE' },
+                  { v: 'CORE_PCE', l: 'Core PCE' },
+                  { v: 'FOMC', l: 'FOMC Meeting' },
+                  { v: 'RATE_DECISION', l: 'Rate Decision' },
+                  { v: 'FOMC_MINUTES', l: 'FOMC Minutes' },
+                  { v: 'FOMC_PRESSER', l: 'FOMC Press Conference' },
+                  { v: 'NFP', l: 'Nonfarm Payrolls' },
+                  { v: 'ADP_EMPLOYMENT', l: 'ADP Employment' },
+                  { v: 'UNEMPLOYMENT_CLAIMS', l: 'Unemployment Claims' },
+                  { v: 'JOLTS', l: 'JOLTS Job Openings' },
+                  { v: 'PPI', l: 'PPI' },
+                  { v: 'GDP', l: 'GDP' },
+                  { v: 'RETAIL_SALES', l: 'Retail Sales' },
+                  { v: 'CORE_RETAIL_SALES', l: 'Core Retail Sales' },
+                  { v: 'CONSUMER_CONFIDENCE', l: 'Consumer Confidence' },
+                  { v: 'CONSUMER_SENTIMENT', l: 'Consumer Sentiment' },
+                  { v: 'ISM_MANUFACTURING', l: 'ISM Manufacturing PMI' },
+                  { v: 'ISM_SERVICES', l: 'ISM Services PMI' },
+                  { v: 'TRADE_BALANCE', l: 'Trade Balance' },
+                  { v: 'OTHER', l: 'Other' },
+                ].map(({ v, l }) => (
+                  <option key={v} value={v}>{l}</option>
                 ))}
               </select>
             </div>

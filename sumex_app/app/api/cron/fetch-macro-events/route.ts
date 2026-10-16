@@ -59,10 +59,18 @@ async function handleMacroSync(request: Request) {
             previous: ev.previous,
             updated_at: now,
           }
-          // Only overwrite actual if FMP has new data and user hasn't set manual status
+          // Write actual value if ForexFactory has it and user hasn't manually recorded it
           if (ev.actual && existing.status !== 'reaction_recorded') {
             update.actual = ev.actual
             update.actual_released_at = now
+            update.status = 'released'
+          }
+          // Auto-advance status to 'released' for past events stuck as upcoming/planned
+          if (
+            !update.status &&
+            ev.status === 'released' &&
+            (existing.status === 'upcoming' || existing.status === 'planned')
+          ) {
             update.status = 'released'
           }
           await supabase.from('macro_events').update(update).eq('id', existing.id)

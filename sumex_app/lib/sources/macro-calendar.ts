@@ -34,7 +34,8 @@ export interface MappedMacroEvent {
 }
 
 /**
- * Maps FF event title keywords → our macro_event_type enum + display title
+ * Maps FF event title keywords → our macro_event_type enum + display title.
+ * ORDER MATTERS: more specific patterns must come before broader ones.
  */
 const EVENT_TYPE_MAP: Array<{
   patterns: string[]
@@ -42,6 +43,7 @@ const EVENT_TYPE_MAP: Array<{
   titleOverride: string
   importance: 'high' | 'medium' | 'low'
 }> = [
+  // ── Inflation ──────────────────────────────────────────────────────────────
   {
     patterns: ['core cpi m/m'],
     type: 'CORE_CPI',
@@ -49,7 +51,7 @@ const EVENT_TYPE_MAP: Array<{
     importance: 'high',
   },
   {
-    patterns: ['core cpi y/y', 'core cpi'],
+    patterns: ['core cpi y/y'],
     type: 'CORE_CPI',
     titleOverride: 'US Core CPI YoY',
     importance: 'high',
@@ -61,23 +63,37 @@ const EVENT_TYPE_MAP: Array<{
     importance: 'high',
   },
   {
-    patterns: ['cpi y/y', 'cpi'],
+    patterns: ['cpi y/y'],
     type: 'CPI',
     titleOverride: 'US CPI YoY',
     importance: 'high',
   },
   {
-    patterns: ['core pce price index', 'core pce'],
+    patterns: ['core pce price index', 'core pce deflator', 'core pce'],
     type: 'CORE_PCE',
-    titleOverride: 'US Core PCE YoY',
+    titleOverride: 'US Core PCE Price Index',
     importance: 'high',
   },
   {
-    patterns: ['pce price index', 'personal spending'],
+    patterns: ['pce price index'],
     type: 'PCE',
-    titleOverride: 'US PCE YoY',
+    titleOverride: 'US PCE Price Index',
     importance: 'high',
   },
+  {
+    patterns: ['core ppi m/m', 'core ppi'],
+    type: 'PPI',
+    titleOverride: 'US Core PPI MoM',
+    importance: 'medium',
+  },
+  {
+    patterns: ['ppi m/m'],
+    type: 'PPI',
+    titleOverride: 'US PPI MoM',
+    importance: 'medium',
+  },
+
+  // ── FOMC / Fed ────────────────────────────────────────────────────────────
   {
     patterns: ['fomc meeting minutes'],
     type: 'FOMC_MINUTES',
@@ -85,7 +101,7 @@ const EVENT_TYPE_MAP: Array<{
     importance: 'high',
   },
   {
-    patterns: ['fomc press conference', 'fed chair', 'powell'],
+    patterns: ['fomc press conference', 'fed chair', 'powell speaks', 'fed chair speaks'],
     type: 'FOMC_PRESSER',
     titleOverride: 'Fed Chair Press Conference',
     importance: 'high',
@@ -102,6 +118,8 @@ const EVENT_TYPE_MAP: Array<{
     titleOverride: 'FOMC Rate Statement',
     importance: 'high',
   },
+
+  // ── Employment ────────────────────────────────────────────────────────────
   {
     patterns: ['non-farm employment change', 'nonfarm payrolls', 'nfp'],
     type: 'NFP',
@@ -109,22 +127,84 @@ const EVENT_TYPE_MAP: Array<{
     importance: 'high',
   },
   {
-    patterns: ['core ppi m/m', 'core ppi'],
-    type: 'PPI',
-    titleOverride: 'US Core PPI MoM',
+    patterns: ['adp non-farm employment change', 'adp nonfarm', 'adp employment'],
+    type: 'ADP_EMPLOYMENT',
+    titleOverride: 'ADP Employment Change',
     importance: 'medium',
   },
   {
-    patterns: ['ppi m/m', 'ppi'],
-    type: 'PPI',
-    titleOverride: 'US PPI MoM',
+    patterns: ['unemployment claims', 'initial jobless claims', 'jobless claims'],
+    type: 'UNEMPLOYMENT_CLAIMS',
+    titleOverride: 'US Unemployment Claims',
     importance: 'medium',
   },
   {
-    patterns: ['gdp q/q', 'gdp'],
+    patterns: ['jolts job openings', 'job openings', 'jolts'],
+    type: 'JOLTS',
+    titleOverride: 'JOLTS Job Openings',
+    importance: 'medium',
+  },
+
+  // ── Growth / Output ───────────────────────────────────────────────────────
+  {
+    patterns: ['gdp q/q', 'gdp growth', 'gross domestic product'],
     type: 'GDP',
     titleOverride: 'US GDP QoQ',
     importance: 'high',
+  },
+  {
+    patterns: ['personal spending'],
+    type: 'PCE',
+    titleOverride: 'US Personal Spending',
+    importance: 'medium',
+  },
+
+  // ── Retail / Consumer ─────────────────────────────────────────────────────
+  {
+    patterns: ['core retail sales m/m', 'core retail sales'],
+    type: 'CORE_RETAIL_SALES',
+    titleOverride: 'US Core Retail Sales MoM',
+    importance: 'high',
+  },
+  {
+    patterns: ['retail sales m/m', 'retail sales'],
+    type: 'RETAIL_SALES',
+    titleOverride: 'US Retail Sales MoM',
+    importance: 'high',
+  },
+  {
+    patterns: ['cb consumer confidence', 'consumer confidence'],
+    type: 'CONSUMER_CONFIDENCE',
+    titleOverride: 'CB Consumer Confidence',
+    importance: 'medium',
+  },
+  {
+    patterns: ['preliminary umi', 'umi', 'michigan consumer sentiment', 'consumer sentiment'],
+    type: 'CONSUMER_SENTIMENT',
+    titleOverride: 'Michigan Consumer Sentiment',
+    importance: 'medium',
+  },
+
+  // ── ISM / PMI ─────────────────────────────────────────────────────────────
+  {
+    patterns: ['ism manufacturing pmi', 'ism manufacturing'],
+    type: 'ISM_MANUFACTURING',
+    titleOverride: 'ISM Manufacturing PMI',
+    importance: 'medium',
+  },
+  {
+    patterns: ['ism non-manufacturing pmi', 'ism services pmi', 'ism services'],
+    type: 'ISM_SERVICES',
+    titleOverride: 'ISM Services PMI',
+    importance: 'medium',
+  },
+
+  // ── Trade ─────────────────────────────────────────────────────────────────
+  {
+    patterns: ['trade balance'],
+    type: 'TRADE_BALANCE',
+    titleOverride: 'US Trade Balance',
+    importance: 'medium',
   },
 ]
 
@@ -137,16 +217,20 @@ function mapFFEvent(ev: ForexFactoryEvent): MappedMacroEvent | null {
         ev.impact === 'High' ? 'high' : ev.impact === 'Medium' ? 'medium' : mapping.importance
 
       // FF dates include timezone offset (e.g., "2026-09-11T08:30:00-04:00")
-      // Convert to UTC ISO string directly
-      const isoTime = new Date(ev.date).toISOString()
+      const eventTimeUtc = new Date(ev.date).toISOString()
 
       const actual = ev.actual && ev.actual !== '' ? ev.actual : null
-      const status = actual ? 'released' : 'upcoming'
+
+      // Auto-detect status: if ForexFactory has the actual value, mark released.
+      // Also mark released if the event time is in the past (FF may have dropped the actual
+      // from the feed after the week rolled over).
+      const isPast = new Date(eventTimeUtc) < new Date()
+      const status = actual ? 'released' : isPast ? 'released' : 'upcoming'
 
       return {
         type: mapping.type,
         title: mapping.titleOverride,
-        event_time_utc: isoTime,
+        event_time_utc: eventTimeUtc,
         importance,
         forecast: ev.forecast && ev.forecast !== '' ? ev.forecast : null,
         previous: ev.previous && ev.previous !== '' ? ev.previous : null,
@@ -199,3 +283,4 @@ export async function fetchFmpMacroEvents(_apiKey?: string): Promise<MappedMacro
 
   return mapped
 }
+
