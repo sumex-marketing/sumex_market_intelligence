@@ -13,6 +13,7 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Layers,
+  Sparkles,
 } from 'lucide-react'
 import CryptoIcon from '@/app/components/CryptoIcon'
 import { createClient } from '@/lib/supabase/client'
@@ -62,6 +63,7 @@ export default function MacroCalendarWorkspace({
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [syncingEtf, setSyncingEtf] = useState(false)
   const [syncingMacro, setSyncingMacro] = useState(false)
+  const [generatingDraft, setGeneratingDraft] = useState(false)
   const [selectedEtfAsset, setSelectedEtfAsset] = useState<'ALL' | 'BTC' | 'ETH' | 'SOL' | 'HYPE'>('ALL')
 
   // Local events state — kept in sync via Supabase Realtime
@@ -225,6 +227,31 @@ export default function MacroCalendarWorkspace({
     }
   }
 
+  const handleGenerateEtfDraft = async () => {
+    setGeneratingDraft(true)
+    try {
+      const res = await fetch('/api/content/scan-and-draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ maxEtfDays: 10 }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        if (data.createdDrafts?.length > 0) {
+          router.push(`/content/${data.createdDrafts[0].id}`)
+        } else {
+          router.push('/content')
+        }
+      } else {
+        alert(`Draft generation error: ${data.error ?? 'Unknown error'}`)
+      }
+    } catch {
+      alert('Error triggering draft generation')
+    } finally {
+      setGeneratingDraft(false)
+    }
+  }
+
   const handleSyncMacroEvents = async () => {
     setSyncingMacro(true)
     try {
@@ -349,14 +376,32 @@ export default function MacroCalendarWorkspace({
             </button>
           </div>
         ) : (
-          <button
-            onClick={handleSyncEtfFlows}
-            className="btn btn-purple btn-sm"
-            disabled={syncingEtf}
-          >
-            <RefreshCw size={14} className={syncingEtf ? 'spin' : ''} />
-            {syncingEtf ? 'Syncing...' : 'Sync ETF Flows'}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleGenerateEtfDraft}
+              className="btn btn-sm"
+              disabled={generatingDraft}
+              title="Auto-generate publishable social media & intelligence drafts for noteworthy ETF flows"
+              style={{
+                color: '#23F7DD',
+                background: 'rgba(35,247,221,0.08)',
+                border: '1px solid rgba(35,247,221,0.25)',
+                gap: 6,
+              }}
+            >
+              {generatingDraft ? <RefreshCw size={14} className="spin" /> : <Sparkles size={14} />}
+              <span>{generatingDraft ? 'Generating Draft...' : '⚡ Generate Flow Draft'}</span>
+            </button>
+
+            <button
+              onClick={handleSyncEtfFlows}
+              className="btn btn-purple btn-sm"
+              disabled={syncingEtf}
+            >
+              <RefreshCw size={14} className={syncingEtf ? 'spin' : ''} />
+              {syncingEtf ? 'Syncing...' : 'Sync ETF Flows'}
+            </button>
+          </div>
         )}
       </div>
 

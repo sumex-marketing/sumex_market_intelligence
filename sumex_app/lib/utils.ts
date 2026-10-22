@@ -290,3 +290,60 @@ export function truncate(str: string, maxLen: number): string {
 export function slugify(str: string): string {
   return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 }
+
+/**
+ * Strips all markdown syntax characters (#, *, _, `, >, etc.) and returns clean plain text
+ * ready for copying directly to social media (X/Twitter, Telegram), newsletters, or messaging.
+ */
+export function stripMarkdown(md: string | null | undefined): string {
+  if (!md) return ''
+  return md
+    // Remove image syntax ![alt](url)
+    .replace(/!\[.*?\]\(.*?\)/g, '')
+    // Remove link syntax [text](url) -> text
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    // Remove fenced code blocks
+    .replace(/```[a-z]*\n([\s\S]*?)```/g, '$1')
+    // Remove inline code
+    .replace(/`([^`]+)`/g, '$1')
+    // Strip headers (# Header -> Header, ### Header -> Header)
+    .replace(/^#{1,6}\s*(.+)$/gm, '$1')
+    // Strip bold and italics with matching delimiters (**bold** -> bold, *italic* -> italic)
+    .replace(/(\*\*|__)(.*?)\1/g, '$2')
+    .replace(/(\*|_)(.*?)\1/g, '$2')
+    // Strip any residual or unmatched asterisks/underscores for bold
+    .replace(/\*\*/g, '')
+    .replace(/__/g, '')
+    // Remove strikethrough (~~text~~)
+    .replace(/~~(.*?)~~/g, '$1')
+    // Strip blockquotes (> quote -> quote)
+    .replace(/^\s*>\s+(.+)$/gm, '$1')
+    // Standardize bullet points, preserving indentation
+    .replace(/^(\s*)[-*•]\s+/gm, '$1• ')
+    // Remove horizontal rules
+    .replace(/^[ \t]*[-*_]{3,}[ \t]*$/gm, '')
+    // Clean up residual headers that had no text after ###
+    .replace(/^#{1,6}\s*$/gm, '')
+    // Collapse excess newlines (3+ -> 2)
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
+/**
+ * Converts basic markdown to clean HTML for rich-text clipboard copying (Google Docs, Slack, Notion, Word)
+ */
+export function markdownToRichHtml(title: string, md: string): string {
+  const cleanBodyHtml = md
+    .replace(/^## (.+)$/gm, '<h2 style="font-size:16pt;font-weight:bold;margin:16px 0 8px;">$1</h2>')
+    .replace(/^### (.+)$/gm, '<h3 style="font-size:13pt;font-weight:bold;margin:12px 0 6px;">$1</h3>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/^\s*• (.+)$/gm, '<li style="margin:4px 0;">$1</li>')
+    .replace(/^\s*[-*] (.+)$/gm, '<li style="margin:4px 0;">$1</li>')
+    .replace(/^([^<].+)$/gm, '<p style="margin:8px 0;line-height:1.6;">$1</p>')
+
+  return `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#111;">
+    <h1 style="font-size:20pt;font-weight:bold;margin-bottom:12px;">${title}</h1>
+    ${cleanBodyHtml}
+  </div>`
+}

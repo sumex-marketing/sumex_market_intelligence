@@ -18,6 +18,10 @@ import {
   Layers,
   FilePlus,
   Trash2,
+  Sparkles,
+  CheckCircle2,
+  AlertCircle,
+  FileText,
 } from 'lucide-react'
 
 interface SignalFeedWorkspaceProps {
@@ -59,6 +63,90 @@ export default function SignalFeedWorkspace({
   const [severity, setSeverity] = useState<SignalSeverity>('medium')
   const [score, setScore] = useState(6.0)
   const [triggerDetail, setTriggerDetail] = useState('')
+
+  const [draftingAll, setDraftingAll] = useState(false)
+  const [draftNotice, setDraftNotice] = useState<{
+    type: 'success' | 'info' | 'error'
+    message: string
+    createdCount: number
+    createdDrafts?: Array<{ id: string; title: string; format: string }>
+  } | null>(null)
+  const [draftingSignalId, setDraftingSignalId] = useState<string | null>(null)
+
+  const handleCheckAndGenerateDrafts = async () => {
+    setDraftingAll(true)
+    setDraftNotice(null)
+    try {
+      const res = await fetch('/api/content/scan-and-draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
+      const data = await res.json()
+      if (data.success) {
+        setDraftNotice({
+          type: data.totalCreated > 0 ? 'success' : 'info',
+          message: data.summaryMessage || 'Scan complete.',
+          createdCount: data.totalCreated ?? 0,
+          createdDrafts: data.createdDrafts,
+        })
+        router.refresh()
+      } else {
+        setDraftNotice({
+          type: 'error',
+          message: data.error || 'Failed to scan and generate drafts.',
+          createdCount: 0,
+        })
+      }
+    } catch {
+      setDraftNotice({
+        type: 'error',
+        message: 'Network error triggering draft generator.',
+        createdCount: 0,
+      })
+    } finally {
+      setDraftingAll(false)
+    }
+  }
+
+  const handleDraftSingleSignal = async (sig: Signal) => {
+    setDraftingSignalId(sig.id)
+    try {
+      // 1. Create or get research card
+      const resCard = await fetch('/api/research', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          signal_id: sig.id,
+          observation: sig.title,
+          question: `What institutional drivers triggered this ${sig.subject} move and how does it shift market structure?`,
+          thesis: sig.trigger_detail || sig.evidence_summary || 'Institutional catalyst signal detected.',
+        }),
+      })
+      const cardData = await resCard.json()
+      const cardId = cardData.data?.id
+      if (!cardId) {
+        alert('Could not initialize research card for signal')
+        return
+      }
+
+      // 2. Generate clean draft
+      const resDraft = await fetch(`/api/research/${cardId}/generate-draft`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ format: 'market_pulse' }),
+      })
+      const draftData = await resDraft.json()
+      if (draftData.data?.id) {
+        router.push(`/content/${draftData.data.id}`)
+      } else {
+        alert(draftData.error || 'Failed to generate draft for signal')
+      }
+    } catch {
+      alert('Error generating draft for signal')
+    } finally {
+      setDraftingSignalId(null)
+    }
+  }
 
   const handleRunScan = async () => {
     setScanning(true)
@@ -218,9 +306,28 @@ export default function SignalFeedWorkspace({
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 flex-wrap">
           {activeTab === 'signals' ? (
             <>
+              {/* Primary User Action: Click to Generate Drafts */}
+              <button
+                onClick={handleCheckAndGenerateDrafts}
+                className="btn btn-secondary btn-sm"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(35,247,221,0.15) 0%, rgba(142,51,255,0.15) 100%)',
+                  borderColor: 'rgba(35,247,221,0.4)',
+                  color: '#23F7DD',
+                  fontWeight: 700,
+                  gap: 6,
+                  boxShadow: '0 2px 10px rgba(35,247,221,0.15)',
+                }}
+                disabled={draftingAll}
+                title="System automatically checks ETF flows and high-conviction signals and drafts any pending reports"
+              >
+                {draftingAll ? <RefreshCw size={14} className="spin" /> : <Sparkles size={14} />}
+                <span>{draftingAll ? 'Checking & Drafting...' : '⚡ Generate Drafts'}</span>
+              </button>
+
               <button
                 onClick={handleRunScan}
                 className="btn btn-ghost btn-sm"
@@ -230,6 +337,7 @@ export default function SignalFeedWorkspace({
                 <RefreshCw size={14} className={scanning ? 'spin' : ''} />
                 <span>{scanning ? 'Scanning...' : 'Run Scanner'}</span>
               </button>
+
               <button
                 onClick={() => setShowNewModal(true)}
                 className="btn btn-primary btn-sm"
@@ -257,6 +365,63 @@ export default function SignalFeedWorkspace({
           )}
         </div>
       </div>
+
+      {/* ── Draft Generation Result Notification Banner ── */}
+      {draftNotice && (
+        <div
+          className="card p-3 flex items-center justify-between flex-wrap gap-3 animate-fade-in"
+          style={{
+            background:
+              draftNotice.type === 'success'
+                ? 'linear-gradient(135deg, rgba(35,247,221,0.12) 0%, rgba(142,51,255,0.08) 100%)'
+                : draftNotice.type === 'info'
+                ? 'rgba(255,255,255,0.03)'
+                : 'rgba(239,68,68,0.1)',
+            border:
+              draftNotice.type === 'success'
+                ? '1px solid rgba(35,247,221,0.4)'
+                : draftNotice.type === 'info'
+                ? '1px solid var(--border-subtle)'
+                : '1px solid rgba(239,68,68,0.3)',
+            borderRadius: 10,
+          }}
+        >
+          <div className="flex items-center gap-2.5">
+            {draftNotice.type === 'success' ? (
+              <Sparkles size={18} style={{ color: '#23F7DD' }} />
+            ) : draftNotice.type === 'info' ? (
+              <CheckCircle2 size={18} style={{ color: '#22c55e' }} />
+            ) : (
+              <AlertCircle size={18} style={{ color: '#ef4444' }} />
+            )}
+            <span className="text-sm font-semibold text-primary">{draftNotice.message}</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {draftNotice.createdCount > 0 && (
+              <Link
+                href="/content"
+                className="btn btn-primary btn-xs"
+                style={{
+                  background: '#23F7DD',
+                  color: '#000',
+                  fontWeight: 700,
+                  gap: 4,
+                }}
+              >
+                <FileText size={12} />
+                <span>View Drafts Workspace →</span>
+              </Link>
+            )}
+            <button
+              onClick={() => setDraftNotice(null)}
+              className="btn btn-ghost btn-xs text-muted"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── Workspace Tab Switcher ── */}
       <div className="flex items-center gap-2 border-b border-subtle pb-2">
@@ -605,8 +770,30 @@ export default function SignalFeedWorkspace({
                         </td>
 
                         {/* Actions */}
-                        <td style={{ width: '110px', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                        <td style={{ width: '180px', textAlign: 'right', whiteSpace: 'nowrap' }}>
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
+                            <button
+                              onClick={() => handleDraftSingleSignal(sig)}
+                              disabled={draftingSignalId === sig.id}
+                              className="btn btn-ghost btn-xs"
+                              style={{
+                                color: '#23F7DD',
+                                background: 'rgba(35,247,221,0.08)',
+                                border: '1px solid rgba(35,247,221,0.25)',
+                                gap: 3,
+                                padding: '3px 7px',
+                                fontSize: '0.78rem',
+                              }}
+                              title="Generate intelligence draft report for this signal"
+                            >
+                              {draftingSignalId === sig.id ? (
+                                <RefreshCw size={11} className="spin" />
+                              ) : (
+                                <Sparkles size={11} />
+                              )}
+                              <span>{draftingSignalId === sig.id ? 'Drafting...' : 'Draft'}</span>
+                            </button>
+
                             <Link
                               href={`/signals/${sig.id}`}
                               className="btn btn-ghost btn-sm"

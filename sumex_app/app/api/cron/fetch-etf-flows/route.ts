@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { scrapeFarsideEtfFlows } from '@/lib/sources/farside'
 import { isAuthorizedCronOrUser } from '@/lib/auth/cron-auth'
+import { autoGenerateEtfFlowDrafts } from '@/lib/services/etf-draft-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -84,6 +85,15 @@ async function handleEtfSync(request: Request) {
       })
       .eq('name', 'Farside Investors')
 
+    // Auto-generate content drafts for noteworthy flows (divergence, reversal, spike)
+    let autoDraftsCreated = 0
+    try {
+      const draftResult = await autoGenerateEtfFlowDrafts(supabase, { maxDays: 5 })
+      autoDraftsCreated = draftResult.createdCount
+    } catch (draftErr) {
+      console.error('[fetch-etf-flows] Auto-draft generation error:', draftErr)
+    }
+
     // Fire-and-forget: trigger signal detection after fresh ETF data lands
     const baseUrl = new URL(request.url).origin
     const cronSecret = process.env.CRON_SECRET ? `?secret=${process.env.CRON_SECRET}` : ''
@@ -92,6 +102,7 @@ async function handleEtfSync(request: Request) {
     return NextResponse.json({
       success: true,
       records: allFlows.length,
+      auto_drafts_created: autoDraftsCreated,
     })
   } catch (err: any) {
     const errorMsg = err?.message ?? 'ETF scrape error'

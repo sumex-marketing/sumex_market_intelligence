@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { stripMarkdown } from '@/lib/utils'
 
 export const dynamic = 'force-dynamic'
 
@@ -281,6 +282,7 @@ export async function POST(
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          signal: AbortSignal.timeout(8000),
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
             generationConfig: {
@@ -304,6 +306,7 @@ export async function POST(
           'Content-Type': 'application/json',
           Authorization: `Bearer ${openaiApiKey}`,
         },
+        signal: AbortSignal.timeout(8000),
         body: JSON.stringify({
           model: 'gpt-4o-mini',
           messages: [{ role: 'user', content: prompt }],
@@ -327,14 +330,17 @@ export async function POST(
     draftBody = generateStructuredFallback(card, format, etfTotals, macroEvents)
   }
 
-  // 5. Save draft to content_drafts
+  // 5. Save clean draft to content_drafts
+  const cleanTitle = stripMarkdown(`${formatLabel}: ${cardTitle}`)
+  const cleanBody = stripMarkdown(draftBody)
+
   const { data: draft, error: draftError } = await supabase
     .from('content_drafts')
     .insert({
       research_id: id,
       format,
-      title: `${formatLabel}: ${cardTitle}`,
-      body: draftBody,
+      title: cleanTitle,
+      body: cleanBody,
       source_list: (card.context_news ?? []).map((n: any) => n.url).filter(Boolean),
       status: 'draft',
       generated_by_ai: generatedByAi,
@@ -349,8 +355,8 @@ export async function POST(
       .insert({
         research_id: id,
         format,
-        title: `${formatLabel}: ${cardTitle}`,
-        body: draftBody,
+        title: cleanTitle,
+        body: cleanBody,
         source_list: (card.context_news ?? []).map((n: any) => n.url).filter(Boolean),
         status: 'draft',
       })
