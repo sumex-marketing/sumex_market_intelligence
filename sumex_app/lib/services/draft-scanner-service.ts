@@ -185,7 +185,6 @@ export async function checkAndDraftAllPending(
             title: cleanDraftTitle,
             body: cleanDraftBody,
             status: 'draft',
-            generated_by_ai: true,
           })
           .select('*')
           .single()
