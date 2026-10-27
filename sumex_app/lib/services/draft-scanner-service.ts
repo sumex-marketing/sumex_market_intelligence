@@ -1,6 +1,7 @@
 import { SupabaseClient } from '@supabase/supabase-js'
 import { autoGenerateEtfFlowDrafts } from './etf-draft-service'
 import { stripMarkdown, deduplicateDraftContent } from '@/lib/utils'
+import { getTokenUnlocks, isHighImpactUnlock, emitUnlockSignal } from './token-unlock-service'
 
 export interface ScanAndDraftResult {
   totalChecked: number
@@ -86,6 +87,16 @@ export async function checkAndDraftAllPending(
   // ── 2. Check High-Conviction Signals ──────────────────────────────────────────
   let signalDraftsCount = 0
   try {
+    // Ensure high-impact token unlocks have signals emitted
+    try {
+      const { data: unlocks } = await getTokenUnlocks(supabase)
+      for (const u of unlocks) {
+        if (isHighImpactUnlock(u)) {
+          await emitUnlockSignal(supabase, u)
+        }
+      }
+    } catch {}
+
     // Fetch signals with high score or high severity
     let signalQuery = supabase
       .from('signals')

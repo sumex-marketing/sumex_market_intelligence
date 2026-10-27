@@ -464,3 +464,26 @@ export const MACRO_EVENT_TYPE_LABELS: Record<MacroEventType, string> = {
   TRADE_BALANCE: 'Trade Balance',
   OTHER: 'Other',
 }
+
+// ============================================================
+// TOKEN UNLOCKS
+// ============================================================
+
+export type UnlockType = 'linear' | 'cliff'
+
+export interface TokenUnlock {
+  id: string
+  token_name: string
+  token_symbol: string
+  unlock_date: string // YYYY-MM-DD
+  unlock_time_utc?: string | null
+  amount_tokens?: number | null
+  est_value_usd: number
+  pct_circulating_supply: number
+  unlock_type: UnlockType
+  description?: string | null
+  source?: string | null
+  created_at: string
+  updated_at?: string
+}
+

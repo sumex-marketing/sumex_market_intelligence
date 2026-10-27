@@ -10,6 +10,7 @@ import {
   FileText,
   Edit3,
   Calendar,
+  Unlock,
   Settings,
   Loader2,
 } from 'lucide-react'
@@ -53,6 +54,11 @@ export default function SidebarNav({ userRole }: SidebarNavProps) {
       label: 'Content Drafts',
       href: '/content',
       icon: Edit3,
+    },
+    {
+      label: 'Token Unlocks',
+      href: '/unlocks',
+      icon: Unlock,
     },
     {
       label: 'Macro Calendar',

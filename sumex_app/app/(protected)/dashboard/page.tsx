@@ -25,9 +25,11 @@ import {
   Edit3,
   ArrowUpRight,
   ArrowDownRight,
+  Unlock,
 } from 'lucide-react'
 import DashboardQuickActions from './DashboardQuickActions'
 import CryptoIcon from '@/app/components/CryptoIcon'
+import { getTokenUnlocks, formatUnlockValue } from '@/lib/services/token-unlock-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -91,6 +93,7 @@ export default async function DashboardPage() {
     etfTotalsRes,
     researchRes,
     draftsRes,
+    unlocksSummary,
   ] = await Promise.all([
     supabase.from('latest_market_snapshots').select('*'),
     supabase.from('latest_market_metrics').select('*').single(),
@@ -116,6 +119,7 @@ export default async function DashboardPage() {
       .select('id, research_id, format, title, status, created_at')
       .order('created_at', { ascending: false })
       .limit(3),
+    getTokenUnlocks(supabase),
   ])
 
   const snapshots = snapshotsRes.data ?? []
@@ -125,6 +129,7 @@ export default async function DashboardPage() {
   const etfTotals = etfTotalsRes.data ?? []
   const recentResearch = researchRes.data ?? []
   const recentDrafts = draftsRes.data ?? []
+  const topUnlocks = unlocksSummary.data ?? []
 
   const latestBtcFlow = etfTotals.find((t: any) => t.asset === 'BTC')
   const latestEthFlow = etfTotals.find((t: any) => t.asset === 'ETH')
@@ -844,6 +849,70 @@ export default async function DashboardPage() {
                   </div>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 3 }}>
                     {new Date(event.event_time_utc).toUTCString()}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Top Token Unlocks This Week Card */}
+          <div className="card flex-col gap-0" style={{ padding: 0, overflow: 'hidden' }}>
+            <div
+              className="flex items-center justify-between"
+              style={{
+                padding: '14px 18px',
+                borderBottom: '1px solid var(--border-subtle)',
+                background: 'rgba(35, 247, 221, 0.05)',
+              }}
+            >
+              <div className="flex items-center gap-2">
+                <Unlock size={15} color="#23F7DD" />
+                <span style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-primary)' }}>
+                  Top Token Unlocks
+                </span>
+                <span className="badge badge-purple text-xs">This Week</span>
+              </div>
+              <Link
+                href="/unlocks"
+                className="btn btn-ghost btn-sm"
+                style={{ color: '#23F7DD', fontSize: '0.82rem' }}
+              >
+                Unlocks Desk →
+              </Link>
+            </div>
+
+            {topUnlocks.length === 0 ? (
+              <div style={{ padding: '24px 18px', fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center' }}>
+                No token unlocks scheduled this week.
+              </div>
+            ) : (
+              topUnlocks.slice(0, 4).map((token: any, idx: number) => (
+                <div
+                  key={token.id}
+                  style={{
+                    padding: '12px 18px',
+                    borderBottom: idx < 3 ? '1px solid var(--border-subtle)' : 'none',
+                  }}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-primary)' }}>
+                        {token.token_name}
+                      </span>
+                      <span className="text-xs text-muted">({token.token_symbol})</span>
+                    </div>
+                    <span className="font-mono font-bold text-sm" style={{ color: '#23F7DD' }}>
+                      {formatUnlockValue(token.est_value_usd)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-muted mt-1">
+                    <span>
+                      Dilution:{' '}
+                      <b style={{ color: token.pct_circulating_supply >= 5 ? '#ef4444' : 'var(--text-secondary)' }}>
+                        {token.pct_circulating_supply}% circ supply
+                      </b>
+                    </span>
+                    <span>🗓️ {token.unlock_date}</span>
                   </div>
                 </div>
               ))
