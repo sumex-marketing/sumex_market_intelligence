@@ -76,3 +76,41 @@ export async function POST(request: Request) {
 
   return NextResponse.json({ data })
 }
+
+export async function DELETE(request: Request) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  try {
+    const body = await request.json().catch(() => ({}))
+    const ids: string[] | undefined = Array.isArray(body.ids) && body.ids.length > 0 ? body.ids : undefined
+
+    let query = supabase.from('research_cards').delete({ count: 'exact' })
+
+    if (ids && ids.length > 0) {
+      query = query.in('id', ids)
+    } else {
+      // Delete all research cards
+      query = query.neq('id', '00000000-0000-0000-0000-000000000000')
+    }
+
+    const { error, count } = await query
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+
+    return NextResponse.json({
+      success: true,
+      count: count ?? 0,
+      message: `Successfully deleted ${count ?? 0} research card(s).`,
+    })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message ?? 'Internal server error' }, { status: 500 })
+  }
+}
+

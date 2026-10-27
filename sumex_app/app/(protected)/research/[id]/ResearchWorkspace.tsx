@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ResearchCard, AiAnalysisInput, VerifiedFact, NewsItem, ContentFormat } from '@/lib/types'
 import {
@@ -19,6 +20,7 @@ import {
   ChevronDown,
   FileText,
   Zap,
+  ArrowLeft,
 } from 'lucide-react'
 
 const FORMAT_OPTIONS: { value: ContentFormat; label: string; desc: string }[] = [
@@ -118,6 +120,24 @@ export default function ResearchWorkspace({ card }: { card: ResearchCard }) {
     }
   }
 
+  const handleDeleteCard = async () => {
+    if (!confirm(`Delete research card "${card.observation}"? This cannot be undone.`)) return
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/research/${card.id}`, { method: 'DELETE' })
+      if (res.ok) {
+        router.push('/research')
+      } else {
+        const data = await res.json().catch(() => ({}))
+        alert(`Failed to delete card: ${data.error ?? res.statusText}`)
+      }
+    } catch {
+      alert('Error deleting research card')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleGenerateAiDraft = async () => {
     setDraftGenerating(true)
     setDraftResult(null)
@@ -209,6 +229,29 @@ export default function ResearchWorkspace({ card }: { card: ResearchCard }) {
 
   return (
     <div className="flex-col gap-6">
+      {/* Top Navigation & Delete Card Button */}
+      <div className="flex items-center justify-between">
+        <Link href="/research" className="btn btn-ghost btn-sm" style={{ gap: 6 }}>
+          <ArrowLeft size={14} /> Back to Research Cards
+        </Link>
+        <button
+          onClick={handleDeleteCard}
+          disabled={loading}
+          className="btn btn-sm"
+          style={{
+            color: '#ff4d4f',
+            borderColor: 'rgba(255, 77, 79, 0.35)',
+            background: 'rgba(255, 77, 79, 0.08)',
+            fontWeight: 600,
+            gap: 6,
+          }}
+          title="Delete this research card"
+        >
+          <Trash2 size={13} />
+          <span>Delete Card</span>
+        </button>
+      </div>
+
       {/* Header Bar */}
       <div className="card-glass flex items-center justify-between gap-4">
         <div>

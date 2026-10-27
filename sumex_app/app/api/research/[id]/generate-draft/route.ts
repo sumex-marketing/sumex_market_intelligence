@@ -4,13 +4,13 @@ import { stripMarkdown, deduplicateDraftContent } from '@/lib/utils'
 
 export const dynamic = 'force-dynamic'
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 function fmtM(val: number | null | undefined): string {
   if (val == null) return 'N/A'
-  const abs = Math.abs(val)
   const sign = val >= 0 ? '+' : '-'
-  if (abs >= 1000) return `${sign}$${(abs / 1000).toFixed(2)}B`
-  return `${sign}$${abs.toFixed(0)}M`
+  const absRaw = Math.abs(val)
+  const absM = absRaw >= 10_000 ? absRaw / 1_000_000 : absRaw
+  if (absM >= 1000) return `${sign}$${(absM / 1000).toFixed(2)}B`
+  return `${sign}$${absM.toFixed(1)}M`
 }
 
 // ─── Live-data context builder ─────────────────────────────────────────────────
