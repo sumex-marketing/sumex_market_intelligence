@@ -400,11 +400,11 @@ export default function ResearchCardList({ initialCards }: { initialCards: Resea
   }
 
   return (
-    <div className="flex-col gap-6">
+    <div className="flex-col gap-6" style={{ width: '100%', maxWidth: '100%', minWidth: 0, boxSizing: 'border-box' }}>
       {/* ─── Top Header & Primary Actions ───────────────────────────────────── */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between flex-wrap gap-4" style={{ width: '100%', maxWidth: '100%', minWidth: 0 }}>
+        <div style={{ minWidth: 0, flex: '1 1 280px' }}>
+          <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-2xl font-extrabold text-primary">Research Cards</h1>
             <span
               className="badge"
@@ -423,7 +423,7 @@ export default function ResearchCardList({ initialCards }: { initialCards: Resea
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {/* Delete All / Delete View Button */}
           {cards.length > 0 && (
             <button
@@ -471,12 +471,15 @@ export default function ResearchCardList({ initialCards }: { initialCards: Resea
       {/* ─── Feedback Notice Alert ─────────────────────────────────────────── */}
       {notice && (
         <div
-          className="card flex items-center justify-between"
+          className="card flex items-center justify-between flex-wrap gap-2"
           style={{
             padding: '10px 16px',
             background: notice.type === 'success' ? 'rgba(34, 197, 94, 0.12)' : 'rgba(239, 68, 68, 0.12)',
             border: `1px solid ${notice.type === 'success' ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
             borderRadius: 8,
+            width: '100%',
+            maxWidth: '100%',
+            boxSizing: 'border-box',
           }}
         >
           <div className="flex items-center gap-2 text-sm" style={{ color: notice.type === 'success' ? '#22c55e' : '#ef4444' }}>
@@ -494,23 +497,23 @@ export default function ResearchCardList({ initialCards }: { initialCards: Resea
       )}
 
       {/* ─── Intelligence Stats Ribbon ────────────────────────────────────── */}
-      <div className="grid-4" style={{ gap: 14 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 210px), 1fr))', gap: 14, width: '100%', maxWidth: '100%' }}>
         <div
           className="card flex items-center justify-between"
-          style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', padding: 14 }}
+          style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', padding: 14, minWidth: 0 }}
         >
           <div>
             <div className="text-xs text-muted font-medium uppercase tracking-wider">Total Cards</div>
             <div className="text-2xl font-black text-primary mt-1">{stats.total}</div>
           </div>
-          <div style={{ padding: 10, borderRadius: 10, background: 'rgba(35, 247, 221, 0.1)', color: '#23F7DD' }}>
+          <div style={{ padding: 10, borderRadius: 10, background: 'rgba(35, 247, 221, 0.1)', color: '#23F7DD', flexShrink: 0 }}>
             <Layers size={20} />
           </div>
         </div>
 
         <div
           className="card flex items-center justify-between"
-          style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', padding: 14 }}
+          style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', padding: 14, minWidth: 0 }}
         >
           <div>
             <div className="text-xs text-muted font-medium uppercase tracking-wider">AI Synthesized</div>
@@ -521,14 +524,14 @@ export default function ResearchCardList({ initialCards }: { initialCards: Resea
               </span>
             </div>
           </div>
-          <div style={{ padding: 10, borderRadius: 10, background: 'rgba(142, 51, 255, 0.12)', color: '#8E33FF' }}>
+          <div style={{ padding: 10, borderRadius: 10, background: 'rgba(142, 51, 255, 0.12)', color: '#8E33FF', flexShrink: 0 }}>
             <Sparkles size={20} />
           </div>
         </div>
 
         <div
           className="card flex items-center justify-between"
-          style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', padding: 14 }}
+          style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', padding: 14, minWidth: 0 }}
         >
           <div>
             <div className="text-xs text-muted font-medium uppercase tracking-wider">Approved Theses</div>
@@ -536,14 +539,14 @@ export default function ResearchCardList({ initialCards }: { initialCards: Resea
               {stats.approved}
             </div>
           </div>
-          <div style={{ padding: 10, borderRadius: 10, background: 'rgba(34, 197, 94, 0.12)', color: '#22c55e' }}>
+          <div style={{ padding: 10, borderRadius: 10, background: 'rgba(34, 197, 94, 0.12)', color: '#22c55e', flexShrink: 0 }}>
             <CheckCircle2 size={20} />
           </div>
         </div>
 
         <div
           className="card flex items-center justify-between"
-          style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', padding: 14 }}
+          style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', padding: 14, minWidth: 0 }}
         >
           <div>
             <div className="text-xs text-muted font-medium uppercase tracking-wider">Drafts Generated</div>
@@ -551,7 +554,7 @@ export default function ResearchCardList({ initialCards }: { initialCards: Resea
               {stats.withDrafts}
             </div>
           </div>
-          <div style={{ padding: 10, borderRadius: 10, background: 'rgba(245, 158, 11, 0.12)', color: '#f59e0b' }}>
+          <div style={{ padding: 10, borderRadius: 10, background: 'rgba(245, 158, 11, 0.12)', color: '#f59e0b', flexShrink: 0 }}>
             <Zap size={20} />
           </div>
         </div>
@@ -564,12 +567,15 @@ export default function ResearchCardList({ initialCards }: { initialCards: Resea
           background: 'var(--bg-card)',
           border: '1px solid var(--border-default)',
           padding: 14,
+          width: '100%',
+          maxWidth: '100%',
+          boxSizing: 'border-box',
         }}
       >
         {/* Row 1: Search & Asset / Sort Controls */}
-        <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center justify-between flex-wrap gap-3" style={{ width: '100%', maxWidth: '100%' }}>
           {/* Search Box */}
-          <div style={{ position: 'relative', flex: '1 1 280px', minWidth: 240 }}>
+          <div style={{ position: 'relative', flex: '1 1 240px', minWidth: 200, maxWidth: '100%' }}>
             <Search
               size={14}
               style={{
@@ -732,9 +738,12 @@ export default function ResearchCardList({ initialCards }: { initialCards: Resea
             top: 70,
             zIndex: 40,
             backdropFilter: 'blur(12px)',
+            width: '100%',
+            maxWidth: '100%',
+            boxSizing: 'border-box',
           }}
         >
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap" style={{ minWidth: 0 }}>
             <span
               className="badge"
               style={{
@@ -751,7 +760,7 @@ export default function ResearchCardList({ initialCards }: { initialCards: Resea
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {/* Export JSON */}
             <button
               onClick={handleBatchExport}
@@ -847,7 +856,15 @@ export default function ResearchCardList({ initialCards }: { initialCards: Resea
         </div>
       ) : (
         /* Render Grid of Research Cards */
-        <div className="grid-3">
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 320px), 1fr))',
+            gap: 16,
+            width: '100%',
+            maxWidth: '100%',
+          }}
+        >
           {filteredCards.map((card) => {
             const isSelected = selectedIds.has(card.id)
             const subject = card.signals?.subject || 'Manual'
@@ -859,269 +876,293 @@ export default function ResearchCardList({ initialCards }: { initialCards: Resea
             return (
               <div
                 key={card.id}
+                onClick={() => router.push(`/research/${card.id}`)}
+                className="card flex-col justify-between"
                 style={{
+                  cursor: 'pointer',
                   position: 'relative',
                   borderRadius: 12,
-                  transition: 'all 0.2s ease',
-                  border: isSelected ? '1px solid #23F7DD' : '1px solid transparent',
+                  background: isSelected ? 'rgba(35, 247, 221, 0.04)' : 'var(--bg-elevated)',
+                  border: isSelected ? '1px solid #23F7DD' : '1px solid var(--border-default)',
+                  padding: '16px',
+                  minHeight: 250,
+                  minWidth: 0,
+                  width: '100%',
+                  maxWidth: '100%',
+                  boxSizing: 'border-box',
+                  overflow: 'hidden',
+                  transition: 'border-color 0.2s, transform 0.15s, box-shadow 0.15s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(35, 247, 221, 0.4)'
+                  e.currentTarget.style.transform = 'translateY(-2px)'
+                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.3)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = isSelected ? '#23F7DD' : 'var(--border-default)'
+                  e.currentTarget.style.transform = 'none'
+                  e.currentTarget.style.boxShadow = 'none'
                 }}
               >
-                {/* Multi-select Checkbox on Card */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: 12,
-                    left: 12,
-                    zIndex: 20,
-                  }}
-                  onClick={(e) => handleToggleSelect(e, card.id)}
-                >
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() => {}}
-                    style={{
-                      cursor: 'pointer',
-                      accentColor: 'var(--brand-primary)',
-                      width: 16,
-                      height: 16,
-                    }}
-                  />
-                </div>
-
-                {/* Top Action Buttons (Copy Prompt & Delete) */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: 10,
-                    right: 10,
-                    zIndex: 20,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                  }}
-                >
-                  {/* Copy Prompt Button */}
-                  <button
-                    onClick={(e) => handleCopyPrompt(e, card.id)}
-                    title="Copy full ChatGPT prompt & live package"
-                    style={{
-                      background: 'rgba(35, 247, 221, 0.08)',
-                      border: '1px solid rgba(35, 247, 221, 0.2)',
-                      borderRadius: 6,
-                      padding: '4px 7px',
-                      cursor: 'pointer',
-                      color: copiedId === card.id ? '#22c55e' : 'var(--text-muted)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 4,
-                      fontSize: '0.72rem',
-                      transition: 'all 0.15s ease',
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(35, 247, 221, 0.18)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(35, 247, 221, 0.08)')}
+                <div style={{ minWidth: 0, width: '100%' }}>
+                  {/* Row 1: Checkbox + Subject Badge (Left) & Copy/Delete Buttons (Right) */}
+                  <div
+                    className="flex items-center justify-between gap-2 mb-2.5"
+                    style={{ width: '100%', minWidth: 0 }}
                   >
-                    {copiedId === card.id ? <Check size={12} /> : <Copy size={12} />}
-                  </button>
+                    {/* Left: Checkbox & Asset Badge */}
+                    <div className="flex items-center gap-2" style={{ minWidth: 0, flex: 1 }}>
+                      <div
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleToggleSelect(e, card.id)
+                        }}
+                        title="Select card"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          flexShrink: 0,
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => {}}
+                          style={{
+                            cursor: 'pointer',
+                            accentColor: 'var(--brand-primary)',
+                            width: 15,
+                            height: 15,
+                          }}
+                        />
+                      </div>
 
-                  {/* Single Delete Button */}
-                  <button
-                    onClick={(e) => handleDelete(e, card.id, card.observation ?? card.question ?? 'this card')}
-                    disabled={deletingId === card.id}
-                    title="Delete research card"
-                    style={{
-                      background: 'rgba(239, 68, 68, 0.10)',
-                      border: '1px solid rgba(239, 68, 68, 0.25)',
-                      borderRadius: 6,
-                      padding: '4px 7px',
-                      cursor: 'pointer',
-                      color: 'var(--red, #ef4444)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 4,
-                      fontSize: '0.72rem',
-                      transition: 'background 0.15s',
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(239, 68, 68, 0.22)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(239, 68, 68, 0.10)')}
-                  >
-                    {deletingId === card.id ? <RefreshCw size={12} className="spin" /> : <Trash2 size={12} />}
-                  </button>
-                </div>
-
-                {/* Card Main Container (Click navigates to /research/[id]) */}
-                <Link
-                  href={`/research/${card.id}`}
-                  className="card flex-col justify-between gap-4"
-                  style={{
-                    textDecoration: 'none',
-                    background: isSelected ? 'rgba(35, 247, 221, 0.04)' : 'var(--bg-elevated)',
-                    display: 'flex',
-                    minHeight: 250,
-                    padding: '16px 16px 14px',
-                    borderRadius: 12,
-                    border: '1px solid var(--border-default)',
-                    transition: 'border-color 0.2s, transform 0.15s',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(35, 247, 221, 0.3)'
-                    e.currentTarget.style.transform = 'translateY(-2px)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = isSelected ? '#23F7DD' : 'var(--border-default)'
-                    e.currentTarget.style.transform = 'none'
-                  }}
-                >
-                  <div>
-                    {/* Header Badges */}
-                    <div className="flex items-center gap-2 mb-3" style={{ paddingLeft: 22, paddingRight: 64 }}>
                       <span
-                        className="badge"
+                        className="badge truncate"
                         style={{
                           background: badgeColors.bg,
                           color: badgeColors.text,
                           border: `1px solid ${badgeColors.border}`,
                           fontWeight: 700,
                           fontSize: '0.72rem',
+                          maxWidth: 160,
                         }}
                       >
                         {subject}
                       </span>
-
-                      {/* Editorial Decision or AI Analyzed Badge */}
-                      {card.editorial_decision ? (
-                        <span
-                          className={`badge ${
-                            card.editorial_decision === 'approved'
-                              ? 'badge-green'
-                              : card.editorial_decision === 'rejected'
-                              ? 'badge-red'
-                              : 'badge-amber'
-                          }`}
-                          style={{ textTransform: 'capitalize', fontSize: '0.72rem' }}
-                        >
-                          {card.editorial_decision}
-                        </span>
-                      ) : isAnalyzed ? (
-                        <span className="badge badge-purple" style={{ fontSize: '0.72rem', gap: 4 }}>
-                          <Sparkles size={11} /> AI Analyzed
-                        </span>
-                      ) : (
-                        <span className="badge badge-muted" style={{ fontSize: '0.72rem' }}>
-                          Draft
-                        </span>
-                      )}
-
-                      {/* Draft ready indicator */}
-                      {hasDraft && (
-                        <span
-                          className="badge"
-                          style={{
-                            background: 'rgba(245, 158, 11, 0.15)',
-                            color: '#f59e0b',
-                            border: '1px solid rgba(245, 158, 11, 0.3)',
-                            fontSize: '0.7rem',
-                            fontWeight: 700,
-                          }}
-                        >
-                          ⚡ {draftCount} Draft{draftCount > 1 ? 's' : ''}
-                        </span>
-                      )}
                     </div>
 
-                    {/* Observation Title */}
-                    <h3
-                      className="font-bold text-primary text-base line-clamp-2"
-                      style={{ lineHeight: 1.4, margin: '6px 0 8px' }}
+                    {/* Right: Copy Prompt & Delete Buttons */}
+                    <div
+                      className="flex items-center gap-1.5 flex-shrink-0"
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      {card.observation ?? 'Untitled Observation'}
-                    </h3>
-
-                    {/* Thesis or Core Analytical Question */}
-                    <p
-                      className="text-xs text-muted line-clamp-3"
-                      style={{ lineHeight: 1.5, color: card.thesis ? 'var(--text-secondary)' : 'var(--text-muted)' }}
-                    >
-                      {card.thesis ?? card.question ?? 'Click to formulate thesis & compile analysis...'}
-                    </p>
-                  </div>
-
-                  {/* Card Footer Actions & Metadata */}
-                  <div className="flex-col gap-2.5 pt-3 border-t border-subtle">
-                    {/* Confidence & Timestamp */}
-                    <div className="flex items-center justify-between text-xs text-muted">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-disabled">Confidence:</span>
-                        {card.confidence ? (
-                          <span
-                            className="font-semibold"
-                            style={{
-                              color:
-                                card.confidence >= 7
-                                  ? 'var(--green, #22c55e)'
-                                  : card.confidence >= 4
-                                  ? 'var(--accent-amber, #f59e0b)'
-                                  : 'var(--red, #ef4444)',
-                            }}
-                          >
-                            {card.confidence}/10
-                          </span>
-                        ) : (
-                          <span className="text-disabled">Pending</span>
-                        )}
-                      </div>
-                      <span>{formatRelativeTime(card.created_at)}</span>
-                    </div>
-
-                    {/* Direct Quick Action Toolbar on Card */}
-                    <div className="flex items-center justify-between gap-2 pt-1">
-                      {/* Quick Generate Draft Button */}
                       <button
-                        onClick={(e) => handleQuickDraft(e, card)}
-                        disabled={generatingDraftId === card.id}
-                        className="btn btn-sm"
-                        title="Generate a content draft for this research card"
+                        onClick={(e) => handleCopyPrompt(e, card.id)}
+                        title="Copy full ChatGPT prompt & live package"
                         style={{
-                          flex: 1,
-                          height: 28,
-                          fontSize: '0.74rem',
-                          background: hasDraft ? 'rgba(245, 158, 11, 0.12)' : 'rgba(35, 247, 221, 0.1)',
-                          color: hasDraft ? '#f59e0b' : '#23F7DD',
-                          borderColor: hasDraft ? 'rgba(245, 158, 11, 0.3)' : 'rgba(35, 247, 221, 0.3)',
-                          padding: '0 8px',
+                          background: 'rgba(35, 247, 221, 0.08)',
+                          border: '1px solid rgba(35, 247, 221, 0.2)',
+                          borderRadius: 6,
+                          padding: '4px 7px',
+                          cursor: 'pointer',
+                          color: copiedId === card.id ? '#22c55e' : 'var(--text-muted)',
+                          display: 'flex',
+                          alignItems: 'center',
                           gap: 4,
+                          fontSize: '0.72rem',
+                          transition: 'all 0.15s ease',
                         }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(35, 247, 221, 0.18)')}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(35, 247, 221, 0.08)')}
                       >
-                        {generatingDraftId === card.id ? (
-                          <>
-                            <RefreshCw size={11} className="spin" />
-                            <span>Drafting...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Zap size={11} />
-                            <span>{hasDraft ? 'Generate Another' : '⚡ Quick Draft'}</span>
-                          </>
-                        )}
+                        {copiedId === card.id ? <Check size={12} /> : <Copy size={12} />}
                       </button>
 
-                      {/* Open Workspace Icon Link */}
-                      <span
-                        className="btn btn-ghost btn-sm"
+                      <button
+                        onClick={(e) => handleDelete(e, card.id, card.observation ?? card.question ?? 'this card')}
+                        disabled={deletingId === card.id}
+                        title="Delete research card"
                         style={{
-                          height: 28,
-                          padding: '0 8px',
-                          fontSize: '0.74rem',
+                          background: 'rgba(239, 68, 68, 0.10)',
+                          border: '1px solid rgba(239, 68, 68, 0.25)',
+                          borderRadius: 6,
+                          padding: '4px 7px',
+                          cursor: 'pointer',
+                          color: 'var(--red, #ef4444)',
+                          display: 'flex',
+                          alignItems: 'center',
                           gap: 4,
-                          color: 'var(--text-secondary)',
+                          fontSize: '0.72rem',
+                          transition: 'background 0.15s',
                         }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(239, 68, 68, 0.22)')}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(239, 68, 68, 0.10)')}
                       >
-                        <span>Workspace</span>
-                        <ArrowUpRight size={12} />
-                      </span>
+                        {deletingId === card.id ? <RefreshCw size={12} className="spin" /> : <Trash2 size={12} />}
+                      </button>
                     </div>
                   </div>
-                </Link>
+
+                  {/* Row 2: Status Badges (Flex-Wrap Enabled) */}
+                  <div
+                    className="flex items-center gap-1.5 flex-wrap mb-3"
+                    style={{ width: '100%', minWidth: 0 }}
+                  >
+                    {card.editorial_decision ? (
+                      <span
+                        className={`badge ${
+                          card.editorial_decision === 'approved'
+                            ? 'badge-green'
+                            : card.editorial_decision === 'rejected'
+                            ? 'badge-red'
+                            : 'badge-amber'
+                        }`}
+                        style={{ textTransform: 'capitalize', fontSize: '0.72rem' }}
+                      >
+                        {card.editorial_decision}
+                      </span>
+                    ) : isAnalyzed ? (
+                      <span className="badge badge-purple" style={{ fontSize: '0.72rem', gap: 4 }}>
+                        <Sparkles size={11} /> AI Analyzed
+                      </span>
+                    ) : (
+                      <span className="badge badge-muted" style={{ fontSize: '0.72rem' }}>
+                        Draft
+                      </span>
+                    )}
+
+                    {hasDraft && (
+                      <span
+                        className="badge"
+                        style={{
+                          background: 'rgba(245, 158, 11, 0.15)',
+                          color: '#f59e0b',
+                          border: '1px solid rgba(245, 158, 11, 0.3)',
+                          fontSize: '0.7rem',
+                          fontWeight: 700,
+                        }}
+                      >
+                        ⚡ {draftCount} Draft{draftCount > 1 ? 's' : ''}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Observation Title */}
+                  <h3
+                    className="font-bold text-primary text-base line-clamp-2"
+                    style={{
+                      lineHeight: 1.4,
+                      margin: '4px 0 8px',
+                      wordBreak: 'break-word',
+                      overflowWrap: 'anywhere',
+                      minWidth: 0,
+                      width: '100%',
+                    }}
+                  >
+                    {card.observation ?? 'Untitled Observation'}
+                  </h3>
+
+                  {/* Thesis or Core Analytical Question */}
+                  <p
+                    className="text-xs text-muted line-clamp-3"
+                    style={{
+                      lineHeight: 1.5,
+                      color: card.thesis ? 'var(--text-secondary)' : 'var(--text-muted)',
+                      wordBreak: 'break-word',
+                      overflowWrap: 'anywhere',
+                      minWidth: 0,
+                      width: '100%',
+                    }}
+                  >
+                    {card.thesis ?? card.question ?? 'Click to formulate thesis & compile analysis...'}
+                  </p>
+                </div>
+
+                {/* Card Footer Actions & Metadata */}
+                <div
+                  className="flex-col gap-2 pt-3 border-t border-subtle mt-3"
+                  style={{ width: '100%', minWidth: 0 }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Confidence & Timestamp */}
+                  <div className="flex items-center justify-between text-xs text-muted flex-wrap gap-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-disabled">Confidence:</span>
+                      {card.confidence ? (
+                        <span
+                          className="font-semibold"
+                          style={{
+                            color:
+                              card.confidence >= 7
+                                ? 'var(--green, #22c55e)'
+                                : card.confidence >= 4
+                                ? 'var(--accent-amber, #f59e0b)'
+                                : 'var(--red, #ef4444)',
+                          }}
+                        >
+                          {card.confidence}/10
+                        </span>
+                      ) : (
+                        <span className="text-disabled">Pending</span>
+                      )}
+                    </div>
+                    <span>{formatRelativeTime(card.created_at)}</span>
+                  </div>
+
+                  {/* Direct Quick Action Toolbar on Card */}
+                  <div className="flex items-center justify-between gap-2 pt-1 flex-wrap">
+                    {/* Quick Generate Draft Button */}
+                    <button
+                      onClick={(e) => handleQuickDraft(e, card)}
+                      disabled={generatingDraftId === card.id}
+                      className="btn btn-sm"
+                      title="Generate a content draft for this research card"
+                      style={{
+                        flex: '1 1 140px',
+                        minWidth: 0,
+                        height: 28,
+                        fontSize: '0.74rem',
+                        background: hasDraft ? 'rgba(245, 158, 11, 0.12)' : 'rgba(35, 247, 221, 0.1)',
+                        color: hasDraft ? '#f59e0b' : '#23F7DD',
+                        borderColor: hasDraft ? 'rgba(245, 158, 11, 0.3)' : 'rgba(35, 247, 221, 0.3)',
+                        padding: '0 8px',
+                        gap: 4,
+                      }}
+                    >
+                      {generatingDraftId === card.id ? (
+                        <>
+                          <RefreshCw size={11} className="spin" />
+                          <span>Drafting...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Zap size={11} />
+                          <span>{hasDraft ? 'Generate Another' : '⚡ Quick Draft'}</span>
+                        </>
+                      )}
+                    </button>
+
+                    {/* Open Workspace Link */}
+                    <button
+                      onClick={() => router.push(`/research/${card.id}`)}
+                      className="btn btn-ghost btn-sm"
+                      style={{
+                        height: 28,
+                        padding: '0 8px',
+                        fontSize: '0.74rem',
+                        gap: 4,
+                        color: 'var(--text-secondary)',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <span>Workspace</span>
+                      <ArrowUpRight size={12} />
+                    </button>
+                  </div>
+                </div>
               </div>
             )
           })}

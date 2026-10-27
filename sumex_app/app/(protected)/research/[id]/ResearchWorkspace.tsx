@@ -253,19 +253,19 @@ export default function ResearchWorkspace({ card }: { card: ResearchCard }) {
       </div>
 
       {/* Header Bar */}
-      <div className="card-glass flex items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
+      <div className="card-glass flex items-center justify-between gap-4 flex-wrap" style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
+        <div style={{ minWidth: 0, flex: '1 1 280px' }}>
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
             <span className="badge badge-purple">Research Card</span>
             {card.editorial_decision && (
               <span className="badge badge-green">Decision: {card.editorial_decision}</span>
             )}
           </div>
-          <h1 className="text-xl font-extrabold text-primary">{card.observation}</h1>
-          <p className="text-sm text-muted mt-1">{card.question}</p>
+          <h1 className="text-xl font-extrabold text-primary" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{card.observation}</h1>
+          <p className="text-sm text-muted mt-1" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{card.question}</p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap flex-shrink-0">
           <button
             onClick={handleGeneratePackage}
             className="btn btn-primary"
@@ -287,7 +287,7 @@ export default function ResearchWorkspace({ card }: { card: ResearchCard }) {
       </div>
 
       {/* Main Grid: Data Context on Left, AI Synthesis on Right */}
-      <div className="grid-2" style={{ gridTemplateColumns: '1fr 1fr' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: 16, width: '100%', maxWidth: '100%' }}>
         {/* Left Column: Facts, Context, Market Snapshot */}
         <div className="flex-col gap-6">
           {/* Verified Facts Card */}
@@ -327,13 +327,14 @@ export default function ResearchWorkspace({ card }: { card: ResearchCard }) {
             </div>
 
             <div className="flex-col gap-2">
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <input
                   type="text"
                   className="form-input"
                   placeholder="Article Headline"
                   value={newsTitle}
                   onChange={(e) => setNewsTitle(e.target.value)}
+                  style={{ flex: '1 1 180px', minWidth: 0 }}
                 />
                 <input
                   type="url"
@@ -341,6 +342,7 @@ export default function ResearchWorkspace({ card }: { card: ResearchCard }) {
                   placeholder="https://..."
                   value={newsUrl}
                   onChange={(e) => setNewsUrl(e.target.value)}
+                  style={{ flex: '1 1 160px', minWidth: 0 }}
                 />
                 <button onClick={handleAddNews} className="btn btn-secondary btn-sm flex-shrink-0">
                   <Plus size={14} /> Add Link
@@ -384,7 +386,7 @@ export default function ResearchWorkspace({ card }: { card: ResearchCard }) {
 
             {card.thesis ? (
               <div className="flex-col gap-3">
-                <div className="p-4 bg-surface border-subtle rounded-lg text-sm text-primary leading-relaxed">
+                <div className="p-4 bg-surface border-subtle rounded-lg text-sm text-primary leading-relaxed" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere', minWidth: 0 }}>
                   {card.thesis}
                 </div>
 

@@ -14,7 +14,7 @@ export default async function ResearchPage() {
     .order('created_at', { ascending: false })
 
   return (
-    <div className="flex-col gap-6">
+    <div className="flex-col gap-6" style={{ width: '100%', maxWidth: '100%', minWidth: 0, overflowX: 'hidden' }}>
       <ResearchCardList initialCards={(cards as any) ?? []} />
     </div>
   )
