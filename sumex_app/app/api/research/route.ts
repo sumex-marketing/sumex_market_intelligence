@@ -104,9 +104,22 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
+    // Record research_cleared_at when clearing all cards
+    const now = new Date().toISOString()
+    if (!ids) {
+      await supabase.from('app_settings').upsert({
+        key: 'research_cleared_at',
+        value: now,
+        description: 'Timestamp when all research cards were cleared',
+        updated_at: now,
+        updated_by: user.id,
+      }, { onConflict: 'key' })
+    }
+
     return NextResponse.json({
       success: true,
       count: count ?? 0,
+      cleared_at: !ids ? now : undefined,
       message: `Successfully deleted ${count ?? 0} research card(s).`,
     })
   } catch (err: any) {

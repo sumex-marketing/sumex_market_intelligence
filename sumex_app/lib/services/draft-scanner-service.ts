@@ -18,11 +18,11 @@ export interface ScanAndDraftResult {
 
 function fmtM(val: number | null | undefined): string {
   if (val == null) return 'N/A'
-  const m = val / 1_000_000
-  const abs = Math.abs(m)
-  const sign = m > 0 ? '+' : m < 0 ? '-' : ''
-  if (abs >= 1000) return `${sign}$${(abs / 1000).toFixed(2)}B`
-  return `${sign}$${abs.toFixed(1)}M`
+  const sign = val > 0 ? '+' : val < 0 ? '-' : ''
+  const absRaw = Math.abs(val)
+  const absM = absRaw >= 10_000 ? absRaw / 1_000_000 : absRaw
+  if (absM >= 1000) return `${sign}$${(absM / 1000).toFixed(2)}B`
+  return `${sign}$${absM.toFixed(1)}M`
 }
 
 /**
@@ -42,17 +42,21 @@ export async function checkAndDraftAllPending(
   const minSignalScore = options?.minSignalScore ?? 7.0
   const createdDrafts: ScanAndDraftResult['createdDrafts'] = []
 
-  // If user explicitly triggers manual draft check, clear drafts_cleared_at
+  // If user explicitly triggers manual draft check, clear drafts_cleared_at and research_cleared_at
   let clearedAt: string | null = null
+  let researchClearedAt: string | null = null
   if (options?.ignoreClearedAt) {
-    await supabase.from('app_settings').delete().eq('key', 'drafts_cleared_at')
+    await Promise.all([
+      supabase.from('app_settings').delete().eq('key', 'drafts_cleared_at'),
+      supabase.from('app_settings').delete().eq('key', 'research_cleared_at'),
+    ])
   } else if (!options?.forceDate) {
-    const { data: clearedSetting } = await supabase
-      .from('app_settings')
-      .select('value')
-      .eq('key', 'drafts_cleared_at')
-      .maybeSingle()
-    clearedAt = clearedSetting?.value ? String(clearedSetting.value) : null
+    const [draftSettingRes, researchSettingRes] = await Promise.all([
+      supabase.from('app_settings').select('value').eq('key', 'drafts_cleared_at').maybeSingle(),
+      supabase.from('app_settings').select('value').eq('key', 'research_cleared_at').maybeSingle(),
+    ])
+    clearedAt = draftSettingRes.data?.value ? String(draftSettingRes.data.value) : null
+    researchClearedAt = researchSettingRes.data?.value ? String(researchSettingRes.data.value) : null
   }
 
   // ── 1. Check ETF Flows ────────────────────────────────────────────────────────
@@ -165,30 +169,33 @@ export async function checkAndDraftAllPending(
             continue
           }
         } else {
-          // Create research card
-          const { data: newCard } = await supabase
-            .from('research_cards')
-            .insert({
-              signal_id: sig.id,
-              observation: sig.title,
-              question: `What institutional drivers triggered this ${sig.subject} move and how does it shift market structure?`,
-              thesis: sig.trigger_detail ?? sig.evidence_summary ?? 'Institutional liquidity anomaly detected.',
-              confidence: Math.round(sig.score ?? 7),
-              verified_facts: [{ fact: sig.trigger_detail ?? sig.title }],
-            })
-            .select('id')
-            .single()
+          // If research cards were cleared, only auto-create cards for signals newer than researchClearedAt
+          const isEligibleForCard = !researchClearedAt || (sig.created_at && sig.created_at > researchClearedAt)
+          if (isEligibleForCard) {
+            const { data: newCard } = await supabase
+              .from('research_cards')
+              .insert({
+                signal_id: sig.id,
+                observation: sig.title,
+                question: `What institutional drivers triggered this ${sig.subject} move and how does it shift market structure?`,
+                thesis: sig.trigger_detail ?? sig.evidence_summary ?? 'Institutional liquidity anomaly detected.',
+                confidence: Math.round(sig.score ?? 7),
+                verified_facts: [{ fact: sig.trigger_detail ?? sig.title }],
+              })
+              .select('id')
+              .single()
 
-          if (newCard) {
-            cardId = newCard.id
+            if (newCard) {
+              cardId = newCard.id
+            }
           }
         }
 
         // Generate clean institutional draft body
-        const leadEtf = etfTotals[0]
+        const matchingEtf = etfTotals.find((e) => e.asset?.toUpperCase() === sig.subject?.toUpperCase()) ?? etfTotals[0]
         const nextMacro = macroEvents[0]
-        const etfContext = leadEtf
-          ? `• ${leadEtf.asset} ETF Net Flow (${leadEtf.date}): ${fmtM(leadEtf.net_flow_usd)}`
+        const etfContext = matchingEtf
+          ? `• ${matchingEtf.asset} ETF Net Flow (${matchingEtf.date}): ${fmtM(matchingEtf.net_flow_usd)}`
           : '• ETF flow data pending update'
         const macroContext = nextMacro
           ? `• Upcoming Macro Event: ${nextMacro.title ?? nextMacro.type} (${nextMacro.event_time_utc ? new Date(nextMacro.event_time_utc).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'TBD'})`
