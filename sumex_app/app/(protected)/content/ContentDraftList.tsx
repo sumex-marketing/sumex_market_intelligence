@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Trash2, RefreshCw, Zap, Copy, Check, Sparkles } from 'lucide-react'
@@ -20,9 +20,14 @@ export default function ContentDraftList({ initialDrafts }: { initialDrafts: Con
   const router = useRouter()
   const [drafts, setDrafts] = useState(initialDrafts)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [deletingAll, setDeletingAll] = useState(false)
   const [generatingEtf, setGeneratingEtf] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [filterTab, setFilterTab] = useState<'all' | 'etf' | 'other'>('all')
+
+  useEffect(() => {
+    setDrafts(initialDrafts)
+  }, [initialDrafts])
 
   const handleDelete = async (e: React.MouseEvent, id: string, title: string) => {
     e.preventDefault()
@@ -45,6 +50,47 @@ export default function ContentDraftList({ initialDrafts }: { initialDrafts: Con
     }
   }
 
+  const handleDeleteAll = async (targetScope: 'all' | 'filtered' = 'all') => {
+    const isFiltered = targetScope === 'filtered' && filterTab !== 'all'
+    const targetList = isFiltered ? filteredDrafts : drafts
+    const targetLabel = isFiltered
+      ? `${filteredDrafts.length} ${filterTab === 'etf' ? 'ETF flash' : 'market brief'} draft(s)`
+      : `all ${drafts.length} content draft(s)`
+
+    if (targetList.length === 0) return
+
+    const confirmed = confirm(
+      `Are you sure you want to delete ${targetLabel}? This cannot be undone.`
+    )
+    if (!confirmed) return
+
+    setDeletingAll(true)
+    setScanNotice(null)
+    try {
+      const idsToDelete = targetList.map((d) => d.id)
+      const res = await fetch('/api/content', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: isFiltered ? idsToDelete : undefined }),
+      })
+
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        alert(`Failed to delete drafts: ${data.error ?? res.statusText}`)
+        return
+      }
+
+      const idSet = new Set(idsToDelete)
+      setDrafts((prev) => prev.filter((d) => !idSet.has(d.id)))
+      setScanNotice(`Successfully deleted ${data.count ?? idsToDelete.length} content draft(s).`)
+      router.refresh()
+    } catch {
+      alert('Error deleting content drafts')
+    } finally {
+      setDeletingAll(false)
+    }
+  }
+
   const [scanNotice, setScanNotice] = useState<string | null>(null)
 
   const handleCheckAndGenerateDrafts = async () => {
@@ -54,6 +100,7 @@ export default function ContentDraftList({ initialDrafts }: { initialDrafts: Con
       const res = await fetch('/api/content/scan-and-draft', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ignoreClearedAt: true }),
       })
       const data = await res.json()
       if (data.success) {
@@ -118,23 +165,55 @@ export default function ContentDraftList({ initialDrafts }: { initialDrafts: Con
           </button>
         </div>
 
-        {/* Action Button: Check & Generate Drafts */}
-        <button
-          onClick={handleCheckAndGenerateDrafts}
-          disabled={generatingEtf}
-          className="btn btn-secondary btn-sm"
-          style={{
-            gap: 6,
-            background: 'linear-gradient(135deg, rgba(35,247,221,0.12) 0%, rgba(142,51,255,0.12) 100%)',
-            borderColor: 'rgba(35,247,221,0.4)',
-            color: '#23F7DD',
-            fontWeight: 700,
-          }}
-          title="Scan ETF flows and high-conviction signals to draft any noteworthy events"
-        >
-          {generatingEtf ? <RefreshCw size={14} className="spin" /> : <Sparkles size={14} />}
-          <span>{generatingEtf ? 'Checking Feeds & Drafting...' : '⚡ Check & Generate Drafts'}</span>
-        </button>
+        {/* Action Buttons: Delete All & Check / Generate Drafts */}
+        <div className="flex items-center gap-2">
+          {drafts.length > 0 && (
+            <button
+              onClick={() => handleDeleteAll(filterTab === 'all' ? 'all' : 'filtered')}
+              disabled={deletingAll || generatingEtf}
+              className="btn btn-sm"
+              style={{
+                gap: 6,
+                color: '#ff4d4f',
+                borderColor: 'rgba(255, 77, 79, 0.35)',
+                background: 'rgba(255, 77, 79, 0.08)',
+                fontWeight: 600,
+                transition: 'all 0.2s ease',
+              }}
+              title={
+                filterTab === 'all'
+                  ? `Permanently delete all ${drafts.length} content drafts`
+                  : `Permanently delete ${filteredDrafts.length} ${filterTab === 'etf' ? 'ETF flash' : 'market brief'} draft(s)`
+              }
+            >
+              {deletingAll ? <RefreshCw size={14} className="spin" /> : <Trash2 size={14} />}
+              <span>
+                {deletingAll
+                  ? 'Deleting...'
+                  : filterTab === 'all'
+                  ? `Delete All (${drafts.length})`
+                  : `Delete View (${filteredDrafts.length})`}
+              </span>
+            </button>
+          )}
+
+          <button
+            onClick={handleCheckAndGenerateDrafts}
+            disabled={generatingEtf || deletingAll}
+            className="btn btn-secondary btn-sm"
+            style={{
+              gap: 6,
+              background: 'linear-gradient(135deg, rgba(35,247,221,0.12) 0%, rgba(142,51,255,0.12) 100%)',
+              borderColor: 'rgba(35,247,221,0.4)',
+              color: '#23F7DD',
+              fontWeight: 700,
+            }}
+            title="Scan ETF flows and high-conviction signals to draft any noteworthy events"
+          >
+            {generatingEtf ? <RefreshCw size={14} className="spin" /> : <Sparkles size={14} />}
+            <span>{generatingEtf ? 'Checking Feeds & Drafting...' : '⚡ Check & Generate Drafts'}</span>
+          </button>
+        </div>
       </div>
 
       {/* Notice Banner */}
@@ -158,15 +237,28 @@ export default function ContentDraftList({ initialDrafts }: { initialDrafts: Con
       )}
 
       {filteredDrafts.length === 0 ? (
-        <div className="card empty-state">
-          <div className="empty-state-icon" style={{ fontSize: '2rem' }}>✍️</div>
-          <div className="empty-state-title">No Content Drafts in this view</div>
-          <div className="empty-state-desc">Click "Check & Generate Drafts" to scan for noteworthy ETF flows and market signals.</div>
-          <button onClick={handleCheckAndGenerateDrafts} className="btn btn-primary mt-2">
-            Check & Generate Drafts Now
+        <div className="card empty-state" style={{ padding: '48px 24px', textAlign: 'center' }}>
+          <div className="empty-state-icon" style={{ fontSize: '2.5rem', marginBottom: 12 }}>✍️</div>
+          <div className="empty-state-title" style={{ fontSize: '1.25rem', fontWeight: 700 }}>
+            {drafts.length === 0 ? 'No Content Drafts' : 'No Content Drafts in this view'}
+          </div>
+          <div className="empty-state-desc" style={{ maxWidth: 460, margin: '8px auto 16px' }}>
+            {drafts.length === 0
+              ? 'All drafts have been cleared. Click below anytime to scan market signals and ETF flows to generate fresh drafts on demand.'
+              : 'No drafts match the selected filter tab. Switch tabs or click below to check for new drafts.'}
+          </div>
+          <button
+            onClick={handleCheckAndGenerateDrafts}
+            disabled={generatingEtf}
+            className="btn btn-primary"
+            style={{ gap: 8, fontWeight: 700, margin: '0 auto' }}
+          >
+            {generatingEtf ? <RefreshCw size={16} className="spin" /> : <Sparkles size={16} />}
+            <span>{generatingEtf ? 'Checking Feeds & Drafting...' : '⚡ Check & Generate Drafts Now'}</span>
           </button>
         </div>
       ) : (
+
         <div className="grid-3">
           {filteredDrafts.map((draft) => {
             const isEtf = draft.format === 'etf_watch' || draft.title?.includes('ETF FLOWS') || draft.body?.includes('ETF FLOWS')

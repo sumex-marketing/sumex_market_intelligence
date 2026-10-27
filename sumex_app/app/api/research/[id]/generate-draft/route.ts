@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { stripMarkdown } from '@/lib/utils'
+import { stripMarkdown, deduplicateDraftContent } from '@/lib/utils'
 
 export const dynamic = 'force-dynamic'
 
@@ -143,10 +143,12 @@ ${formatGuide}
 - Use markdown formatting (##, **, bullet lists).
 - Start directly with the article hook - no preamble.
 - **NEVER use em dashes (the character --) anywhere in your output. Use a regular hyphen (-) or rewrite the sentence instead.**
+- **DEDUPLICATION MANDATE:** Do not repeat the headline inside the body paragraphs. Do not repeat the same sentences, statistics, or phrasing across different sections.
 - **IMPORTANT: Actively integrate the LIVE ETF FLOW DATA and MACRO EVENTS into your draft where relevant.** Reference actual flow numbers, dates, and event names - this is what makes Sumex intelligence unique.
 - Keep it concise and data-driven. Sumex intelligence is precise, not padded.
 `
 }
+
 
 // ─── Structured fallback generator ────────────────────────────────────────────
 function generateStructuredFallback(
@@ -330,27 +332,40 @@ export async function POST(
     draftBody = generateStructuredFallback(card, format, etfTotals, macroEvents)
   }
 
-  // 5. Save clean draft to content_drafts
+  // 5. Check if draft already exists for this research card to prevent duplicates
   const cleanTitle = stripMarkdown(`${formatLabel}: ${cardTitle}`)
-  const cleanBody = stripMarkdown(draftBody)
+  const cleanBody = deduplicateDraftContent(draftBody)
 
-  const { data: draft, error: draftError } = await supabase
+  const { data: existingDraft } = await supabase
     .from('content_drafts')
-    .insert({
-      research_id: id,
-      format,
-      title: cleanTitle,
-      body: cleanBody,
-      source_list: (card.context_news ?? []).map((n: any) => n.url).filter(Boolean),
-      status: 'draft',
-      generated_by_ai: generatedByAi,
-    })
-    .select('*')
-    .single()
+    .select('id')
+    .eq('research_id', id)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
 
-  if (draftError) {
-    // Handle missing column gracefully
-    const { data: draft2, error: draftError2 } = await supabase
+  let draft = null
+
+  if (existingDraft?.id) {
+    const { data: updatedDraft, error: updateErr } = await supabase
+      .from('content_drafts')
+      .update({
+        format,
+        title: cleanTitle,
+        body: cleanBody,
+        source_list: (card.context_news ?? []).map((n: any) => n.url).filter(Boolean),
+        status: 'draft',
+      })
+      .eq('id', existingDraft.id)
+      .select('*')
+      .single()
+
+    if (updateErr) {
+      return NextResponse.json({ error: updateErr.message }, { status: 400 })
+    }
+    draft = updatedDraft
+  } else {
+    const { data: newDraft, error: insertErr } = await supabase
       .from('content_drafts')
       .insert({
         research_id: id,
@@ -363,12 +378,15 @@ export async function POST(
       .select('*')
       .single()
 
-    if (draftError2) {
-      return NextResponse.json({ error: draftError2.message }, { status: 400 })
+    if (insertErr) {
+      return NextResponse.json({ error: insertErr.message }, { status: 400 })
     }
-
-    return NextResponse.json({ data: draft2, generatedByAi, liveDataInjected: { etfRows: etfTotals.length, macroEvents: macroEvents.length } })
+    draft = newDraft
   }
 
-  return NextResponse.json({ data: draft, generatedByAi, liveDataInjected: { etfRows: etfTotals.length, macroEvents: macroEvents.length } })
+  return NextResponse.json({
+    data: draft,
+    generatedByAi,
+    liveDataInjected: { etfRows: etfTotals.length, macroEvents: macroEvents.length },
+  })
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Signal, SignalSeverity, SignalType } from '@/lib/types'
@@ -72,6 +72,29 @@ export default function SignalFeedWorkspace({
     createdDrafts?: Array<{ id: string; title: string; format: string }>
   } | null>(null)
   const [draftingSignalId, setDraftingSignalId] = useState<string | null>(null)
+
+  // Auto-populate drafts in the background without user needing to click
+  useEffect(() => {
+    let mounted = true
+    const autoScan = async () => {
+      try {
+        const res = await fetch('/api/content/scan-and-draft', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        })
+        const data = await res.json()
+        if (mounted && data.success && data.totalCreated > 0) {
+          router.refresh()
+        }
+      } catch {
+        // Silent background check
+      }
+    }
+    autoScan()
+    return () => {
+      mounted = false
+    }
+  }, [router])
 
   const handleCheckAndGenerateDrafts = async () => {
     setDraftingAll(true)

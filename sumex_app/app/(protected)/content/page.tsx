@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { checkAndDraftAllPending } from '@/lib/services/draft-scanner-service'
 import { Edit3 } from 'lucide-react'
 import ContentDraftList from './ContentDraftList'
 
@@ -7,6 +8,14 @@ export const dynamic = 'force-dynamic'
 
 export default async function ContentPage() {
   const supabase = await createClient()
+
+  // Auto-populate any pending ETF flows or high-conviction signals automatically on page load
+  try {
+    const serviceClient = createServiceClient()
+    await checkAndDraftAllPending(serviceClient, { maxEtfDays: 7, minSignalScore: 6.5 })
+  } catch (err) {
+    console.warn('[content/page] Auto-population check notice:', err)
+  }
 
   const { data: drafts } = await supabase
     .from('content_drafts')
@@ -22,20 +31,8 @@ export default async function ContentPage() {
         </div>
       </div>
 
-      {(!drafts || drafts.length === 0) ? (
-        <div className="card empty-state">
-          <Edit3 className="empty-state-icon" />
-          <div className="empty-state-title">No Content Drafts Created</div>
-          <div className="empty-state-desc">
-            Approved Research Cards generate publication-ready content drafts automatically.
-          </div>
-          <Link href="/research" className="btn btn-primary mt-2">
-            Go to Research Cards
-          </Link>
-        </div>
-      ) : (
-        <ContentDraftList initialDrafts={drafts as any} />
-      )}
+      <ContentDraftList initialDrafts={(drafts ?? []) as any} />
     </div>
   )
 }
+

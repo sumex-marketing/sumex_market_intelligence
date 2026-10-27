@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { scrapeFarsideEtfFlows } from '@/lib/sources/farside'
 import { isAuthorizedCronOrUser } from '@/lib/auth/cron-auth'
-import { autoGenerateEtfFlowDrafts } from '@/lib/services/etf-draft-service'
+import { checkAndDraftAllPending } from '@/lib/services/draft-scanner-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -85,11 +85,11 @@ async function handleEtfSync(request: Request) {
       })
       .eq('name', 'Farside Investors')
 
-    // Auto-generate content drafts for noteworthy flows (divergence, reversal, spike)
+    // Auto-generate content drafts for all pending ETF flows & high-conviction signals
     let autoDraftsCreated = 0
     try {
-      const draftResult = await autoGenerateEtfFlowDrafts(supabase, { maxDays: 5 })
-      autoDraftsCreated = draftResult.createdCount
+      const draftResult = await checkAndDraftAllPending(supabase, { maxEtfDays: 5, minSignalScore: 6.5 })
+      autoDraftsCreated = draftResult.totalCreated
     } catch (draftErr) {
       console.error('[fetch-etf-flows] Auto-draft generation error:', draftErr)
     }

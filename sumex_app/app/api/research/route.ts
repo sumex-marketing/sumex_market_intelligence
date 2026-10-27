@@ -23,6 +23,21 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   const body = await request.json()
 
+  // Prevent duplicate research cards for the same signal
+  if (body.signal_id) {
+    const { data: existingCard } = await supabase
+      .from('research_cards')
+      .select('*')
+      .eq('signal_id', body.signal_id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (existingCard) {
+      return NextResponse.json({ data: existingCard })
+    }
+  }
+
   // Fetch latest snapshot & macro context if creating from signal or scratch
   const [snapshotsRes, macroRes, etfRes] = await Promise.all([
     supabase.from('latest_market_snapshots').select('*'),

@@ -6,6 +6,7 @@ import { scrapeFarsideEtfFlows } from '@/lib/sources/farside'
 import { fetchFmpMacroEvents } from '@/lib/sources/macro-calendar'
 import { executeSignalDetection } from '@/app/api/cron/detect-signals/route'
 import { isAuthorizedCronOrUser } from '@/lib/auth/cron-auth'
+import { checkAndDraftAllPending } from '@/lib/services/draft-scanner-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -94,6 +95,13 @@ async function handleSyncAll(request: Request) {
         created: 0,
         error: sigErr?.message ?? 'Signal detection error',
       }
+    }
+
+    // 3. Auto-populate drafts across all intelligence feeds
+    try {
+      await checkAndDraftAllPending(supabase, { maxEtfDays: 5, minSignalScore: 6.5 })
+    } catch (draftErr) {
+      console.error('[sync-all] Auto-draft generation error:', draftErr)
     }
 
     const totalRecords =

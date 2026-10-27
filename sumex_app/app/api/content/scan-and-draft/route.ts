@@ -22,17 +22,20 @@ async function handleScanAndDraft(request: Request) {
   let forceDate: string | undefined = undefined
   let maxEtfDays = 14
   let minSignalScore = 6.5
+  let ignoreClearedAt = false
 
   try {
     const { searchParams } = new URL(request.url)
     const paramDate = searchParams.get('date')
     if (paramDate) forceDate = paramDate
+    if (searchParams.get('ignoreClearedAt') === 'true') ignoreClearedAt = true
 
     if (request.method === 'POST') {
       const body = await request.json().catch(() => ({}))
       if (body.date) forceDate = body.date
       if (body.maxEtfDays) maxEtfDays = body.maxEtfDays
       if (body.minSignalScore) minSignalScore = body.minSignalScore
+      if (body.ignoreClearedAt !== undefined) ignoreClearedAt = Boolean(body.ignoreClearedAt)
     }
   } catch {
     // ignore parse error
@@ -43,6 +46,7 @@ async function handleScanAndDraft(request: Request) {
       forceDate,
       maxEtfDays,
       minSignalScore,
+      ignoreClearedAt,
     })
 
     return NextResponse.json({

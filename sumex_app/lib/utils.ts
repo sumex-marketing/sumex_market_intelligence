@@ -347,3 +347,109 @@ export function markdownToRichHtml(title: string, md: string): string {
     ${cleanBodyHtml}
   </div>`
 }
+
+/**
+ * Deduplicates content inside drafts:
+ * - Removes duplicate paragraphs and identical consecutive lines
+ * - Removes repeated section headers (e.g. repeated '📈 Market Commentary & Catalysts:')
+ * - Removes duplicate sentences across narrative paragraphs (respecting abbreviations and monetary figures)
+ * - Collapses redundant whitespace and ensures clean executive readability
+ */
+export function deduplicateDraftContent(rawText: string | null | undefined): string {
+  if (!rawText) return ''
+  const text = stripMarkdown(rawText).trim()
+  const lines = text.split('\n')
+
+  const seenParagraphs = new Set<string>()
+  const seenSentences = new Set<string>()
+  const seenHeaders = new Set<string>()
+  const cleanedLines: string[] = []
+
+  function normalizeKey(str: string): string {
+    return str.toLowerCase().replace(/[^a-z0-9]/g, '')
+  }
+
+  function splitSentences(t: string): string[] {
+    // Preserve abbreviations (months, U.S., etc.) and monetary decimal points ($12.30M)
+    const safe = t.replace(
+      /(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec|U\.S)\.\s+(\d+|[A-Z])/g,
+      (m) => m.replace('.', '___DOT___')
+    )
+    const parts = safe.split(/(?<=[.!?])\s+(?=[A-Z])/)
+    return parts.map((p) => p.replace(/___DOT___/g, '.'))
+  }
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
+    const trimmed = line.trim()
+
+    if (!trimmed) {
+      if (cleanedLines.length > 0 && cleanedLines[cleanedLines.length - 1] !== '') {
+        cleanedLines.push('')
+      }
+      continue
+    }
+
+    // Check headers (lines ending with colon or starting with emojis/hashes)
+    const isHeader =
+      trimmed.endsWith(':') ||
+      /^#{1,4}\s/.test(trimmed) ||
+      /^[📊📈🎯🏆🔻•\s]{1,4}[A-Za-z]/.test(trimmed) && trimmed.length < 60 && !trimmed.includes('.')
+
+    const normKey = normalizeKey(trimmed)
+
+    // Check exact line duplication
+    if (normKey.length > 15 && seenParagraphs.has(normKey)) {
+      continue // drop duplicate line/paragraph
+    }
+
+    if (isHeader) {
+      if (normKey.length > 8 && seenHeaders.has(normKey)) {
+        continue // drop duplicate header
+      }
+      seenHeaders.add(normKey)
+      seenParagraphs.add(normKey)
+      cleanedLines.push(line)
+      continue
+    }
+
+    // If this line is a bullet item
+    if (trimmed.startsWith('•') || trimmed.startsWith('-')) {
+      if (seenParagraphs.has(normKey)) {
+        continue
+      }
+      seenParagraphs.add(normKey)
+      cleanedLines.push(line)
+      continue
+    }
+
+    // For narrative prose paragraphs, check for duplicate sentences
+    if (trimmed.length > 40) {
+      const sentences = splitSentences(trimmed)
+      const keptSentences: string[] = []
+
+      for (const sentence of sentences) {
+        const sTrim = sentence.trim()
+        const sKey = normalizeKey(sTrim)
+        if (sKey.length >= 28) {
+          if (seenSentences.has(sKey)) {
+            continue // Skip sentence already in the draft!
+          }
+          seenSentences.add(sKey)
+        }
+        keptSentences.push(sTrim)
+      }
+
+      if (keptSentences.length > 0) {
+        seenParagraphs.add(normKey)
+        cleanedLines.push(keptSentences.join(' '))
+      }
+    } else {
+      seenParagraphs.add(normKey)
+      cleanedLines.push(line)
+    }
+  }
+
+  return cleanedLines.join('\n').replace(/\n{3,}/g, '\n\n').trim()
+}
+

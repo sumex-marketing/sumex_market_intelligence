@@ -1,6 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js'
 import { autoGenerateEtfFlowDrafts } from './etf-draft-service'
-import { stripMarkdown } from '@/lib/utils'
+import { stripMarkdown, deduplicateDraftContent } from '@/lib/utils'
 
 export interface ScanAndDraftResult {
   totalChecked: number
@@ -18,8 +18,9 @@ export interface ScanAndDraftResult {
 
 function fmtM(val: number | null | undefined): string {
   if (val == null) return 'N/A'
-  const abs = Math.abs(val)
-  const sign = val >= 0 ? '+' : '-'
+  const m = val / 1_000_000
+  const abs = Math.abs(m)
+  const sign = m > 0 ? '+' : m < 0 ? '-' : ''
   if (abs >= 1000) return `${sign}$${(abs / 1000).toFixed(2)}B`
   return `${sign}$${abs.toFixed(1)}M`
 }
@@ -34,11 +35,25 @@ export async function checkAndDraftAllPending(
     forceDate?: string
     maxEtfDays?: number
     minSignalScore?: number
+    ignoreClearedAt?: boolean
   }
 ): Promise<ScanAndDraftResult> {
   const maxEtfDays = options?.maxEtfDays ?? 14
   const minSignalScore = options?.minSignalScore ?? 7.0
   const createdDrafts: ScanAndDraftResult['createdDrafts'] = []
+
+  // If user explicitly triggers manual draft check, clear drafts_cleared_at
+  let clearedAt: string | null = null
+  if (options?.ignoreClearedAt) {
+    await supabase.from('app_settings').delete().eq('key', 'drafts_cleared_at')
+  } else if (!options?.forceDate) {
+    const { data: clearedSetting } = await supabase
+      .from('app_settings')
+      .select('value')
+      .eq('key', 'drafts_cleared_at')
+      .maybeSingle()
+    clearedAt = clearedSetting?.value ? String(clearedSetting.value) : null
+  }
 
   // ── 1. Check ETF Flows ────────────────────────────────────────────────────────
   let etfDraftsCount = 0
@@ -46,6 +61,7 @@ export async function checkAndDraftAllPending(
     const etfResult = await autoGenerateEtfFlowDrafts(supabase, {
       forceDate: options?.forceDate,
       maxDays: maxEtfDays,
+      afterDate: clearedAt ? clearedAt.substring(0, 10) : undefined,
     })
 
     if (etfResult.createdDrafts && etfResult.createdDrafts.length > 0) {
@@ -67,23 +83,30 @@ export async function checkAndDraftAllPending(
   let signalDraftsCount = 0
   try {
     // Fetch signals with high score or high severity
-    const { data: topSignals } = await supabase
+    let signalQuery = supabase
       .from('signals')
       .select('id, title, subject, score, severity, status, trigger_detail, evidence_summary, created_at')
       .or(`score.gte.${minSignalScore},severity.in.(critical,high),status.in.(validated,content_ready)`)
       .order('score', { ascending: false })
       .limit(10)
 
+    if (clearedAt) {
+      signalQuery = signalQuery.gt('created_at', clearedAt)
+    }
+
+    const { data: topSignals } = await signalQuery
+
     if (topSignals && topSignals.length > 0) {
       // Fetch existing drafts to avoid duplicates
       const { data: existingDrafts } = await supabase
         .from('content_drafts')
-        .select('id, title, research_id')
+        .select('id, title, research_id, created_at')
         .order('created_at', { ascending: false })
-        .limit(60)
+        .limit(120)
 
       const existingTitles = (existingDrafts ?? []).map((d) => (d.title ?? '').toLowerCase())
       const existingResearchIds = new Set((existingDrafts ?? []).map((d) => d.research_id).filter(Boolean))
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
 
       // Also fetch live context once for all candidate signals
       const [etfTotalsRes, macroEventsRes] = await Promise.all([
@@ -104,7 +127,7 @@ export async function checkAndDraftAllPending(
 
       for (const sig of topSignals) {
         // Skip ETF signals that already have an ETF Watch draft
-        if (sig.title.includes('ETF FLOWS') || sig.title.includes('spot ETFs saw net')) {
+        if (sig.title.includes('ETF FLOWS') || sig.title.includes('spot ETFs saw net') || sig.title.includes('ETF Inflow Spike')) {
           continue
         }
 
@@ -114,6 +137,19 @@ export async function checkAndDraftAllPending(
           (t) => t.includes(sigTitleLower) || sigTitleLower.includes(t)
         )
         if (alreadyDrafted) continue
+
+        // Check if this asset already has an active draft generated in the last 24h
+        const alreadyDraftedAsset = (existingDrafts ?? []).some((d) => {
+          if (!d.created_at || d.created_at < oneDayAgo) return false
+          const tLower = (d.title ?? '').toLowerCase()
+          const sLower = sig.subject.toLowerCase()
+          return (
+            tLower.includes(`: ${sLower} `) ||
+            tLower.includes(` ${sLower} ▲`) ||
+            tLower.includes(` ${sLower} ▼`)
+          )
+        })
+        if (alreadyDraftedAsset) continue
 
         // Check if research card exists for this signal
         let cardId: string | null = null
@@ -159,12 +195,19 @@ export async function checkAndDraftAllPending(
           : '• Macro calendar: monitoring risk catalysts'
 
         const cleanDraftTitle = stripMarkdown(`Market Pulse: ${sig.title}`)
-        const cleanDraftBody = stripMarkdown(
+
+        // Avoid repeating the title in thesis
+        const rawDetail = sig.trigger_detail ?? sig.evidence_summary ?? ''
+        const hasDetail = rawDetail.trim().length > 0 && !rawDetail.toLowerCase().includes(sig.title.toLowerCase())
+        const thesisText = hasDetail
+          ? `${rawDetail}. This shift reflects immediate liquidity repositioning by major trading desks.`
+          : `Significant volume and price action observed across institutional metrics, reflecting immediate liquidity repositioning.`
+
+        const rawDraftBody =
           `${sig.title}\n\n` +
           `Asset: ${sig.subject} | Severity: ${sig.severity.toUpperCase()} | Priority Score: ${sig.score ?? 'N/A'}/10\n\n` +
           `Market Thesis:\n` +
-          `${sig.trigger_detail ?? sig.evidence_summary ?? 'Significant market movement observed across institutional metrics.'} ` +
-          `This shift reflects immediate liquidity repositioning by major trading desks.\n\n` +
+          `${thesisText}\n\n` +
           `📊 Live Market Context:\n` +
           `${etfContext}\n` +
           `${macroContext}\n\n` +
@@ -175,7 +218,8 @@ export async function checkAndDraftAllPending(
           `• Track institutional spot ETF flow direction\n` +
           `• Watch macro calendar for volatility catalysts\n\n` +
           `Intelligence compiled by Sumex Market Intelligence Platform`
-        )
+
+        const cleanDraftBody = deduplicateDraftContent(rawDraftBody)
 
         const { data: draft, error: draftErr } = await supabase
           .from('content_drafts')
@@ -209,6 +253,7 @@ export async function checkAndDraftAllPending(
   } catch (err) {
     console.warn('[draft-scanner-service] Signal check failed:', err)
   }
+
 
   // ── 3. Build User Summary Message ─────────────────────────────────────────────
   const totalCreated = createdDrafts.length

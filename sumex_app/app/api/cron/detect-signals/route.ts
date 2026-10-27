@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { isAuthorizedCronOrUser } from '@/lib/auth/cron-auth'
-import { autoGenerateEtfFlowDrafts } from '@/lib/services/etf-draft-service'
+import { checkAndDraftAllPending } from '@/lib/services/draft-scanner-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -420,11 +420,11 @@ export async function executeSignalDetection(supabase: ReturnType<typeof createS
     })
     .eq('name', 'Sumex Signal Engine')
 
-  // Auto-generate content drafts for noteworthy ETF flows
+  // Auto-generate content drafts for noteworthy ETF flows and high-conviction signals
   let autoDraftsCreated = 0
   try {
-    const draftRes = await autoGenerateEtfFlowDrafts(supabase, { maxDays: 5 })
-    autoDraftsCreated = draftRes.createdCount
+    const draftRes = await checkAndDraftAllPending(supabase, { maxEtfDays: 5, minSignalScore: 6.5 })
+    autoDraftsCreated = draftRes.totalCreated
   } catch (draftErr) {
     console.error('[detect-signals] Auto-draft generation error:', draftErr)
   }

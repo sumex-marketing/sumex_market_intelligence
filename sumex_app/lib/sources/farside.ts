@@ -28,7 +28,7 @@ export const BTC_FUNDS: Record<string, string> = {
   BRRR: 'Valkyrie Bitcoin Fund',
   HODL: 'VanEck Bitcoin Trust',
   BTCW: 'WisdomTree Bitcoin Fund',
-  MSBT: 'Coinbase/Treehouse Bitcoin Mini Trust',
+  MSBT: 'Morgan Stanley Bitcoin Trust',
   GBTC: 'Grayscale Bitcoin Trust',
   BTC: 'Grayscale Bitcoin Mini Trust',
 }
@@ -42,6 +42,7 @@ export const ETH_FUNDS: Record<string, string> = {
   ETHV: 'VanEck Ethereum ETF',
   QETH: 'Invesco Galaxy Ethereum ETF',
   EZET: 'Franklin Ethereum ETF',
+  MSSE: 'Morgan Stanley Ethereum Trust',
   ETHE: 'Grayscale Ethereum Trust',
   ETH: 'Grayscale Ethereum Mini Trust',
 }
@@ -52,6 +53,7 @@ export const SOL_FUNDS: Record<string, string> = {
   FSOL: 'Fidelity Solana Fund',
   TSOL: '21Shares Solana Staking ETP',
   SOEZ: 'Franklin Solana ETF',
+  MSOL: 'Morgan Stanley Solana Trust',
   GSOL: 'Grayscale Solana Trust',
 }
 
@@ -59,6 +61,42 @@ export const HYPE_FUNDS: Record<string, string> = {
   BHYP: 'Bitwise Hyperliquid ETP',
   THYP: '21Shares Hyperliquid Staking ETP',
   HYPG: 'Grayscale Hyperliquid Trust',
+}
+
+/**
+ * Dynamic canonical fund name resolution for any newly launched ETPs/ETFs
+ */
+export function getFundDisplayName(ticker: string, asset: 'BTC' | 'ETH' | 'SOL' | 'HYPE'): string {
+  const fundMap =
+    asset === 'BTC' ? BTC_FUNDS : asset === 'ETH' ? ETH_FUNDS : asset === 'SOL' ? SOL_FUNDS : HYPE_FUNDS
+  if (fundMap[ticker]) return fundMap[ticker]
+
+  const t = ticker.toUpperCase()
+  if (t.startsWith('MS')) return `Morgan Stanley ${asset} Trust`
+  if (t.startsWith('IB') || t === 'IBIT') return `iShares ${asset} Trust (BlackRock)`
+  if (t.startsWith('FB') || t.startsWith('FE') || t.startsWith('FS')) return `Fidelity ${asset} Fund`
+  if (t.startsWith('BI') || t.endsWith('B')) return `Bitwise ${asset} ETF`
+  if (t.startsWith('V') || t.endsWith('L')) return `VanEck ${asset} ETP`
+  if (t.startsWith('G')) return `Grayscale ${asset} Trust`
+  if (t.startsWith('T') || t.includes('21')) return `21Shares ${asset} ETP`
+  if (t.startsWith('EZ')) return `Franklin ${asset} ETF`
+  if (t.startsWith('Q')) return `Invesco Galaxy ${asset} ETF`
+  if (t.startsWith('AR')) return `ARK 21Shares ${asset} ETF`
+  if (t.startsWith('BR')) return `Valkyrie ${asset} Fund`
+
+  return `${t} ${asset} Spot ETP`
+}
+
+export function parseFlowUsd(str: string | null | undefined): number | null {
+  if (!str) return null
+  const clean = str.replace(/,/g, '').trim()
+  if (clean === '-' || clean === '' || clean === '0' || clean === '0.0') return 0
+  if (clean.startsWith('(') && clean.endsWith(')')) {
+    const num = parseFloat(clean.slice(1, -1))
+    return isNaN(num) ? null : -num * 1_000_000
+  }
+  const num = parseFloat(clean)
+  return isNaN(num) ? null : num * 1_000_000
 }
 
 /**
@@ -139,6 +177,14 @@ export async function scrapeFarsideEtfFlows(
 function getFallbackEtfFlows(asset: 'BTC' | 'ETH' | 'SOL' | 'HYPE'): ScrapedEtfFlow[] {
   if (asset === 'SOL') {
     return [
+      { date: '2026-10-21', asset: 'SOL', fund_ticker: 'MSOL', fund_name: 'Morgan Stanley Solana Trust', flow_usd: 600_000 },
+      { date: '2026-10-21', asset: 'SOL', fund_ticker: 'BSOL', fund_name: 'Bitwise Solana ETF', flow_usd: 0 },
+      { date: '2026-10-21', asset: 'SOL', fund_ticker: 'VSOL', fund_name: 'VanEck Solana ETP', flow_usd: 0 },
+      { date: '2026-10-21', asset: 'SOL', fund_ticker: 'FSOL', fund_name: 'Fidelity Solana Fund', flow_usd: 0 },
+      { date: '2026-10-21', asset: 'SOL', fund_ticker: 'TSOL', fund_name: '21Shares Solana Staking ETP', flow_usd: 0 },
+      { date: '2026-10-21', asset: 'SOL', fund_ticker: 'SOEZ', fund_name: 'Franklin Solana ETF', flow_usd: 0 },
+      { date: '2026-10-21', asset: 'SOL', fund_ticker: 'GSOL', fund_name: 'Grayscale Solana Trust', flow_usd: 0 },
+
       { date: '2026-09-04', asset: 'SOL', fund_ticker: 'BSOL', fund_name: 'Bitwise Solana ETF', flow_usd: -2_800_000 },
       { date: '2026-09-04', asset: 'SOL', fund_ticker: 'VSOL', fund_name: 'VanEck Solana ETP', flow_usd: 0 },
       { date: '2026-09-04', asset: 'SOL', fund_ticker: 'FSOL', fund_name: 'Fidelity Solana Fund', flow_usd: -2_400_000 },
@@ -178,6 +224,10 @@ function getFallbackEtfFlows(asset: 'BTC' | 'ETH' | 'SOL' | 'HYPE'): ScrapedEtfF
 
   if (asset === 'HYPE') {
     return [
+      { date: '2026-10-21', asset: 'HYPE', fund_ticker: 'BHYP', fund_name: 'Bitwise Hyperliquid ETP', flow_usd: 0 },
+      { date: '2026-10-21', asset: 'HYPE', fund_ticker: 'THYP', fund_name: '21Shares Hyperliquid Staking ETP', flow_usd: 0 },
+      { date: '2026-10-21', asset: 'HYPE', fund_ticker: 'HYPG', fund_name: 'Grayscale Hyperliquid Trust', flow_usd: 0 },
+
       { date: '2026-09-04', asset: 'HYPE', fund_ticker: 'BHYP', fund_name: 'Bitwise Hyperliquid ETP', flow_usd: 10_500_000 },
       { date: '2026-09-04', asset: 'HYPE', fund_ticker: 'THYP', fund_name: '21Shares Hyperliquid Staking ETP', flow_usd: 0 },
       { date: '2026-09-04', asset: 'HYPE', fund_ticker: 'HYPG', fund_name: 'Grayscale Hyperliquid Trust', flow_usd: 0 },
@@ -202,6 +252,18 @@ function getFallbackEtfFlows(asset: 'BTC' | 'ETH' | 'SOL' | 'HYPE'): ScrapedEtfF
 
   if (asset === 'ETH') {
     return [
+      { date: '2026-10-21', asset: 'ETH', fund_ticker: 'ETH', fund_name: 'Grayscale Ethereum Mini Trust', flow_usd: 28_100_000 },
+      { date: '2026-10-21', asset: 'ETH', fund_ticker: 'FETH', fund_name: 'Fidelity Ethereum Fund', flow_usd: 13_000_000 },
+      { date: '2026-10-21', asset: 'ETH', fund_ticker: 'MSSE', fund_name: 'Morgan Stanley Ethereum Trust', flow_usd: 1_300_000 },
+      { date: '2026-10-21', asset: 'ETH', fund_ticker: 'ETHW', fund_name: 'Bitwise Ethereum ETF', flow_usd: 900_000 },
+      { date: '2026-10-21', asset: 'ETH', fund_ticker: 'EZET', fund_name: 'Franklin Ethereum ETF', flow_usd: 900_000 },
+      { date: '2026-10-21', asset: 'ETH', fund_ticker: 'ETHB', fund_name: 'Grayscale Ethereum Mini Trust', flow_usd: 0 },
+      { date: '2026-10-21', asset: 'ETH', fund_ticker: 'TETH', fund_name: '21Shares Core Ethereum ETF', flow_usd: 0 },
+      { date: '2026-10-21', asset: 'ETH', fund_ticker: 'ETHV', fund_name: 'VanEck Ethereum ETF', flow_usd: 0 },
+      { date: '2026-10-21', asset: 'ETH', fund_ticker: 'QETH', fund_name: 'Invesco Galaxy Ethereum ETF', flow_usd: 0 },
+      { date: '2026-10-21', asset: 'ETH', fund_ticker: 'ETHE', fund_name: 'Grayscale Ethereum Trust', flow_usd: 0 },
+      { date: '2026-10-21', asset: 'ETH', fund_ticker: 'ETHA', fund_name: 'iShares Ethereum Trust (BlackRock)', flow_usd: -29_300_000 },
+
       { date: '2026-09-04', asset: 'ETH', fund_ticker: 'ETHA', fund_name: 'iShares Ethereum Trust (BlackRock)', flow_usd: 57_800_000 },
       { date: '2026-09-04', asset: 'ETH', fund_ticker: 'ETHB', fund_name: 'Grayscale Ethereum Mini Trust', flow_usd: 16_400_000 },
       { date: '2026-09-04', asset: 'ETH', fund_ticker: 'FETH', fund_name: 'Fidelity Ethereum Fund', flow_usd: -48_300_000 },
@@ -234,6 +296,19 @@ function getFallbackEtfFlows(asset: 'BTC' | 'ETH' | 'SOL' | 'HYPE'): ScrapedEtfF
   }
 
   return [
+    { date: '2026-10-21', asset: 'BTC', fund_ticker: 'IBIT', fund_name: 'iShares Bitcoin Trust (BlackRock)', flow_usd: 235_000_000 },
+    { date: '2026-10-21', asset: 'BTC', fund_ticker: 'FBTC', fund_name: 'Fidelity Wise Origin Bitcoin Fund', flow_usd: 212_700_000 },
+    { date: '2026-10-21', asset: 'BTC', fund_ticker: 'GBTC', fund_name: 'Grayscale Bitcoin Trust', flow_usd: 32_600_000 },
+    { date: '2026-10-21', asset: 'BTC', fund_ticker: 'BITB', fund_name: 'Bitwise Bitcoin ETF', flow_usd: 19_200_000 },
+    { date: '2026-10-21', asset: 'BTC', fund_ticker: 'ARKB', fund_name: 'ARK 21Shares Bitcoin ETF', flow_usd: 9_800_000 },
+    { date: '2026-10-21', asset: 'BTC', fund_ticker: 'BTC', fund_name: 'Grayscale Bitcoin Mini Trust', flow_usd: 8_200_000 },
+    { date: '2026-10-21', asset: 'BTC', fund_ticker: 'EZBC', fund_name: 'Franklin Bitcoin ETF', flow_usd: 7_300_000 },
+    { date: '2026-10-21', asset: 'BTC', fund_ticker: 'BTCO', fund_name: 'Invesco Galaxy Bitcoin ETF', flow_usd: 0 },
+    { date: '2026-10-21', asset: 'BTC', fund_ticker: 'BRRR', fund_name: 'Valkyrie Bitcoin Fund', flow_usd: 0 },
+    { date: '2026-10-21', asset: 'BTC', fund_ticker: 'HODL', fund_name: 'VanEck Bitcoin Trust', flow_usd: 0 },
+    { date: '2026-10-21', asset: 'BTC', fund_ticker: 'BTCW', fund_name: 'WisdomTree Bitcoin Fund', flow_usd: 0 },
+    { date: '2026-10-21', asset: 'BTC', fund_ticker: 'MSBT', fund_name: 'Morgan Stanley Bitcoin Trust', flow_usd: 0 },
+
     { date: '2026-09-04', asset: 'BTC', fund_ticker: 'IBIT', fund_name: 'iShares Bitcoin Trust (BlackRock)', flow_usd: 117_400_000 },
     { date: '2026-09-04', asset: 'BTC', fund_ticker: 'FBTC', fund_name: 'Fidelity Wise Origin Bitcoin Fund', flow_usd: 57_200_000 },
 
@@ -356,15 +431,20 @@ function parseFarsideHtml(html: string, asset: 'BTC' | 'ETH' | 'SOL' | 'HYPE'): 
   while ((match = rowRegex.exec(html)) !== null) {
     const rowHtml = match[1]
 
-    // Check for header row (th tags)
-    if (rowHtml.includes('<th') && headers.length === 0) {
-      const thRegex = /<th[^>]*>([\s\S]*?)<\/th>/gi
-      let thMatch: RegExpExecArray | null
-      while ((thMatch = thRegex.exec(rowHtml)) !== null) {
-        const cleanHeader = thMatch[1].replace(/<[^>]+>/g, '').trim().toUpperCase()
-        headers.push(cleanHeader)
+    // Check for header row (th or td tags containing known tickers)
+    if (headers.length === 0 && (rowHtml.includes('<th') || rowHtml.includes('IBIT') || rowHtml.includes('ETHA') || rowHtml.includes('BSOL') || rowHtml.includes('BHYP'))) {
+      const cellRegex = /<(?:th|td)[^>]*>([\s\S]*?)<\/(?:th|td)>/gi
+      let cellMatch: RegExpExecArray | null
+      const rowHeaders: string[] = []
+      while ((cellMatch = cellRegex.exec(rowHtml)) !== null) {
+        const cleanHeader = cellMatch[1].replace(/<[^>]+>/g, '').trim().toUpperCase()
+        rowHeaders.push(cleanHeader)
       }
-      continue
+      const matched = rowHeaders.filter((c) => fundMap[c])
+      if (matched.length >= 2) {
+        headers = rowHeaders
+        continue
+      }
     }
 
     // Process data rows (td tags)
@@ -381,37 +461,52 @@ function parseFarsideHtml(html: string, asset: 'BTC' | 'ETH' | 'SOL' | 'HYPE'): 
     const dateStr = parseFarsideDate(cells[0])
     if (!dateStr) continue
 
-    // Iterate through columns that match known fund tickers
+    const dayFlows: ScrapedEtfFlow[] = []
+    const lastIdx = cells.length - 1
+
     headers.forEach((header, index) => {
-      if (index >= cells.length) return
+      if (index >= lastIdx || index === 0) return
       const ticker = header
+      const isKnown = Boolean(fundMap[ticker])
+      const isTicker =
+        /^[A-Z0-9]{2,6}$/.test(ticker) &&
+        !['TOTAL', 'DATE', 'FEE', 'SEED', 'AVG', 'MAX', 'MIN'].includes(ticker)
 
-      if (fundMap[ticker]) {
-        const valStr = cells[index].replace(/,/g, '').trim()
-        let val: number | null = null
-
-        if (valStr === '-' || valStr === '' || valStr === '0') {
-          val = 0
-        } else if (valStr.startsWith('(') && valStr.endsWith(')')) {
-          // Negative value formatted as (12.5) -> -$12.5M
-          const num = parseFloat(valStr.slice(1, -1))
-          if (!isNaN(num)) val = -num * 1_000_000
-        } else {
-          const num = parseFloat(valStr)
-          if (!isNaN(num)) val = num * 1_000_000 // Values are usually in $ Millions
-        }
-
-        if (val !== null) {
-          flows.push({
+      if (isKnown || isTicker) {
+        const flow = parseFlowUsd(cells[index])
+        if (flow !== null) {
+          dayFlows.push({
             date: dateStr,
             asset,
             fund_ticker: ticker,
-            fund_name: fundMap[ticker] ?? ticker,
-            flow_usd: val,
+            fund_name: getFundDisplayName(ticker, asset),
+            flow_usd: flow,
           })
         }
       }
     })
+
+    // Published Total Verification & Cross-Reconciliation
+    const publishedTotalUsd = parseFlowUsd(cells[lastIdx])
+    if (publishedTotalUsd !== null && dayFlows.length > 0) {
+      const sumFundFlows = dayFlows.reduce((acc, f) => acc + (f.flow_usd ?? 0), 0)
+      const diff = Math.round(publishedTotalUsd - sumFundFlows)
+
+      if (Math.abs(diff) >= 50_000) {
+        console.warn(
+          `[farside-scraper HTML] Discrepancy for ${asset} on ${dateStr}: sum=${sumFundFlows / 1e6}M, published=${publishedTotalUsd / 1e6}M, diff=${diff / 1e6}M. Adding reconciliation adjustment.`
+        )
+        dayFlows.push({
+          date: dateStr,
+          asset,
+          fund_ticker: 'FARSIDE_ADJ',
+          fund_name: 'Farside Net Total Reconciliation',
+          flow_usd: diff,
+        })
+      }
+    }
+
+    flows.push(...dayFlows)
   }
 
   return flows
@@ -490,35 +585,55 @@ export function parseFarsideMarkdown(
     const dateStr = parseFarsideDate(cells[0])
     if (!dateStr) continue
 
-    // Read cells corresponding to detected tickers
-    for (let i = 1; i < cells.length; i++) {
+    const dayFlows: ScrapedEtfFlow[] = []
+    const lastIdx = cells.length - 1
+
+    // Read cells corresponding to detected tickers (between date and total)
+    for (let i = 1; i < lastIdx; i++) {
       const ticker = tickers[i]
-      if (!ticker || !fundMap[ticker]) continue
+      if (!ticker) continue
 
-      const rawVal = cells[i].replace(/,/g, '').trim()
-      let flow: number | null = null
+      const isKnown = Boolean(fundMap[ticker])
+      const isTicker =
+        /^[A-Z0-9]{2,6}$/.test(ticker) &&
+        !['TOTAL', 'DATE', 'FEE', 'SEED', 'AVG', 'MAX', 'MIN'].includes(ticker)
 
-      if (rawVal === '-' || rawVal === '' || rawVal === '0' || rawVal === '0.0') {
-        flow = 0
-      } else if (rawVal.startsWith('(') && rawVal.endsWith(')')) {
-        // Negative flow formatted as (12.5) -> -$12.5M
-        const num = parseFloat(rawVal.slice(1, -1))
-        if (!isNaN(num)) flow = -num * 1_000_000
-      } else {
-        const num = parseFloat(rawVal)
-        if (!isNaN(num)) flow = num * 1_000_000
-      }
+      if (!isKnown && !isTicker) continue
 
+      const flow = parseFlowUsd(cells[i])
       if (flow !== null) {
-        flows.push({
+        dayFlows.push({
           date: dateStr,
           asset,
           fund_ticker: ticker,
-          fund_name: fundMap[ticker] ?? ticker,
+          fund_name: getFundDisplayName(ticker, asset),
           flow_usd: flow,
         })
       }
     }
+
+    // Published Total Verification & Cross-Reconciliation
+    const publishedTotalUsd = parseFlowUsd(cells[lastIdx])
+    if (publishedTotalUsd !== null && dayFlows.length > 0) {
+      const sumFundFlows = dayFlows.reduce((acc, f) => acc + (f.flow_usd ?? 0), 0)
+      const diff = Math.round(publishedTotalUsd - sumFundFlows)
+
+      // If discrepancy exceeds $50,000, add reconciliation row so published total matches 100%
+      if (Math.abs(diff) >= 50_000) {
+        console.warn(
+          `[farside-scraper Markdown] Discrepancy for ${asset} on ${dateStr}: sum=${sumFundFlows / 1e6}M, published=${publishedTotalUsd / 1e6}M, diff=${diff / 1e6}M. Adding reconciliation adjustment.`
+        )
+        dayFlows.push({
+          date: dateStr,
+          asset,
+          fund_ticker: 'FARSIDE_ADJ',
+          fund_name: 'Farside Net Total Reconciliation',
+          flow_usd: diff,
+        })
+      }
+    }
+
+    flows.push(...dayFlows)
   }
 
   return flows

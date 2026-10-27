@@ -1,5 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js'
-import { stripMarkdown } from '@/lib/utils'
+import { stripMarkdown, deduplicateDraftContent } from '@/lib/utils'
 
 export interface EtfDaySummary {
   date: string
@@ -376,21 +376,30 @@ export function buildEtfSocialDraft(
   let draftTitle = ''
 
   if (btcIntel?.isMilestone && ethIntel?.isStreakBreaker) {
-    // Exact case of Oct 21: BTC record high + ETH streak break
-    headline = `🇺🇸 ETF FLOWS: US spot bitcoin ETFs recorded ${formatFlowM(btcIntel.netFlowUsd)} in net inflows on ${dayName}, ${btcIntel.milestoneHook}.\n\nSpot ether ETFs added ${formatFlowM(ethIntel.netFlowUsd)}, ${ethIntel.streakHook}.`
-    draftTitle = `🇺🇸 US spot bitcoin ETFs record ${formatFlowM(btcIntel.netFlowUsd)} inflows (${btcIntel.milestoneHook}) as ether snaps ${ethIntel.priorStreakCount}-day outflow streak`
+    const btcAction = (btcIntel.netFlowUsd ?? 0) >= 0 ? 'in net inflows' : 'in net redemptions'
+    const ethAction = (ethIntel.netFlowUsd ?? 0) >= 0 ? 'added' : 'shed'
+    const btcVerb = (btcIntel.netFlowUsd ?? 0) >= 0 ? 'inflows' : 'redemptions'
+    const ethVerb = (ethIntel.netFlowUsd ?? 0) >= 0 ? `snaps ${ethIntel.priorStreakCount}-day outflow streak with` : `snaps ${ethIntel.priorStreakCount}-day inflow streak shedding`
+
+    headline = `🇺🇸 ETF FLOWS: US spot bitcoin ETFs recorded ${formatFlowM(btcIntel.netFlowUsd)} ${btcAction} on ${dayName}, ${btcIntel.milestoneHook}.\n\nSpot ether ETFs ${ethAction} ${formatFlowM(ethIntel.netFlowUsd)}, ${ethIntel.streakHook}.`
+    draftTitle = `🇺🇸 US spot bitcoin ETFs record ${formatFlowM(btcIntel.netFlowUsd)} ${btcVerb} on ${dateLabel} (${btcIntel.milestoneHook}) as ether ${ethVerb} ${formatFlowM(ethIntel.netFlowUsd)}`
   } else if (btcIntel?.isMilestone) {
-    headline = `🇺🇸 ETF FLOWS: US spot bitcoin ETFs recorded ${formatFlowM(btcIntel.netFlowUsd)} in net inflows on ${dayName}, ${btcIntel.milestoneHook}.`
+    const btcAction = (btcIntel.netFlowUsd ?? 0) >= 0 ? 'in net inflows' : 'in net redemptions'
+    const btcVerb = (btcIntel.netFlowUsd ?? 0) >= 0 ? 'inflows' : 'redemptions'
+    headline = `🇺🇸 ETF FLOWS: US spot bitcoin ETFs recorded ${formatFlowM(btcIntel.netFlowUsd)} ${btcAction} on ${dayName}, ${btcIntel.milestoneHook}.`
     if (ethIntel && (ethIntel.netFlowUsd ?? 0) !== 0) {
       headline += `\n\nSpot ether ETFs ${ethIntel.netFlowUsd > 0 ? 'added' : 'shed'} ${formatFlowM(ethIntel.netFlowUsd)}${ethIntel.streakHook ? `, ${ethIntel.streakHook}` : ''}.`
     }
-    draftTitle = `🇺🇸 US spot bitcoin ETFs record ${formatFlowM(btcIntel.netFlowUsd)} net flows (${btcIntel.milestoneHook})`
+    draftTitle = `🇺🇸 US spot bitcoin ETFs record ${formatFlowM(btcIntel.netFlowUsd)} ${btcVerb} on ${dateLabel} (${btcIntel.milestoneHook})`
   } else if (ethIntel?.isStreakBreaker) {
-    headline = `🇺🇸 ETF FLOWS: Spot ether ETFs added ${formatFlowM(ethIntel.netFlowUsd)} on ${dayName}, ${ethIntel.streakHook}.`
+    const ethAction = (ethIntel.netFlowUsd ?? 0) >= 0 ? 'added' : 'shed'
+    const ethVerb = (ethIntel.netFlowUsd ?? 0) >= 0 ? 'add' : 'shed'
+    headline = `🇺🇸 ETF FLOWS: Spot ether ETFs ${ethAction} ${formatFlowM(ethIntel.netFlowUsd)} on ${dayName}, ${ethIntel.streakHook}.`
     if (btcIntel && (btcIntel.netFlowUsd ?? 0) !== 0) {
-      headline += `\n\nSpot bitcoin ETFs recorded ${formatFlowM(btcIntel.netFlowUsd)} in net flows${btcIntel.streakHook ? `, ${btcIntel.streakHook}` : ''}.`
+      const btcAction = (btcIntel.netFlowUsd ?? 0) >= 0 ? 'in net inflows' : 'in net redemptions'
+      headline += `\n\nSpot bitcoin ETFs recorded ${formatFlowM(btcIntel.netFlowUsd)} ${btcAction}${btcIntel.streakHook ? `, ${btcIntel.streakHook}` : ''}.`
     }
-    draftTitle = `🇺🇸 Spot ether ETFs add ${formatFlowM(ethIntel.netFlowUsd)}, ${ethIntel.streakHook}`
+    draftTitle = `🇺🇸 Spot ether ETFs ${ethVerb} ${formatFlowM(ethIntel.netFlowUsd)} on ${dateLabel}, ${ethIntel.streakHook}`
   } else if (evaluation.isDivergence) {
     headline = `🇺🇸 ETF FLOWS: ${evaluation.inflowAssets.join('/')} spot ETFs recorded net inflows on ${dayName}, while ${evaluation.outflowAssets.join('/')} spot ETFs saw net outflows.`
     draftTitle = `🇺🇸 ETF FLOWS: ${evaluation.inflowAssets.join('/')} see net inflows on ${dateLabel} as ${evaluation.outflowAssets.join('/')} experience outflows`
@@ -405,6 +414,7 @@ export function buildEtfSocialDraft(
     draftTitle = `🇺🇸 ETF FLOWS: Flat net flow activity across US spot ETFs on ${dateLabel}`
   }
 
+
   // ── 2. Asset Flow Lines (Order: BTC, ETH, SOL, HYPE) ────────────────────────
   const assetOrder = ['BTC', 'ETH', 'SOL', 'HYPE']
   const sortedTotals = [...totals].sort((a, b) => {
@@ -414,10 +424,19 @@ export function buildEtfSocialDraft(
   })
 
   const flowLines = sortedTotals.map((t) => `• ${t.asset}: ${formatFlowM(t.net_flow_usd)}`)
-  const totalLine = `Total Net Flow: ${formatFlowM(evaluation.totalNetFlowUsd)}`
+  const btcFlow = totals.find((t) => t.asset === 'BTC')?.net_flow_usd ?? 0
+  const ethFlow = totals.find((t) => t.asset === 'ETH')?.net_flow_usd ?? 0
+  const btcEthCombined = btcFlow + ethFlow
+
+  const hasAltcoins = sortedTotals.some(
+    (t) => (t.asset === 'SOL' || t.asset === 'HYPE') && (t.net_flow_usd ?? 0) !== 0
+  )
+  const totalSummary = hasAltcoins
+    ? `Combined BTC + ETH: ${formatFlowM(btcEthCombined)}\nTotal Net Flow (All Assets): ${formatFlowM(evaluation.totalNetFlowUsd)}`
+    : `Total Net Flow: ${formatFlowM(evaluation.totalNetFlowUsd)}`
 
   // ── 3. Tweet / Flash Post (The Block / Cointelegraph Style) ─────────────────
-  const tweetText = `${headline}\n\n${flowLines.join('\n')}\n${totalLine}`
+  const tweetText = `${headline}\n\n${flowLines.join('\n')}\n${totalSummary}`
 
   // ── 4. High Inflows & Outflows: Fund Leaders & Laggards ──────────────────────
   let highFlowsText = '🏆 Top Fund Inflows:\n'
@@ -484,13 +503,20 @@ export function buildEtfSocialDraft(
   // ── 6. Market Commentary & Catalysts ───────────────────────────────────────
   let commentaryText = '📈 Market Commentary & Catalysts:\n\n'
   if (btcIntel?.isMilestone) {
-    commentaryText +=
-      `Institutional capital poured into spot crypto products on ${dayName}, led by an explosive ${formatFlowM(btcIntel.netFlowUsd)} into Bitcoin spot ETFs. ` +
-      `This marked ${btcIntel.milestoneHook}, powered predominantly by dominant inflows into BlackRock (IBIT) and Fidelity (FBTC). ` +
-      `Traders and institutional allocators are positioning aggressively ahead of upcoming macroeconomic volatility and election catalysts, solidifying Bitcoin's role as premier digital gold.\n\n`
+    if ((btcIntel.netFlowUsd ?? 0) >= 0) {
+      commentaryText +=
+        `Institutional capital poured into spot crypto products on ${dayName}, led by ${formatFlowM(btcIntel.netFlowUsd)} into Bitcoin spot ETFs. ` +
+        `This marked ${btcIntel.milestoneHook}, powered predominantly by dominant inflows into BlackRock (IBIT) and Fidelity (FBTC). ` +
+        `Traders and institutional allocators are positioning aggressively ahead of upcoming macroeconomic volatility and election catalysts, solidifying Bitcoin's role as premier digital gold.\n\n`
+    } else {
+      commentaryText +=
+        `Institutional capital pulled back on ${dayName}, led by substantial net redemptions of ${formatFlowM(btcIntel.netFlowUsd)} from Bitcoin spot ETFs. ` +
+        `This marked ${btcIntel.milestoneHook}, driven primarily by profit-taking across major funds including BlackRock (IBIT) and Fidelity (FBTC). ` +
+        `Macro trading desks and institutional allocators scaled back exposure amidst broader risk-off caution and liquidity repositioning ahead of key economic data releases.\n\n`
+    }
   } else if (evaluation.totalNetFlowUsd > 0) {
     commentaryText +=
-      `Institutional demand remained firmly bullish on ${dayName}, generating ${formatFlowM(evaluation.totalNetFlowUsd)} in cumulative net inflows across US spot ETFs. ` +
+      `Institutional demand remained firmly positive on ${dayName}, generating ${formatFlowM(evaluation.totalNetFlowUsd)} in cumulative net inflows across US spot ETFs. ` +
       `High-volume liquidity absorption through regulated exchange-traded products continues to remove liquid supply from OTC desks and secondary exchanges.\n\n`
   } else {
     commentaryText +=
@@ -499,9 +525,14 @@ export function buildEtfSocialDraft(
   }
 
   if (ethIntel?.isStreakBreaker) {
-    commentaryText +=
-      `Crucially, Ethereum spot ETFs added ${formatFlowM(ethIntel.netFlowUsd)}, ${ethIntel.streakHook}. ` +
-      `Positive flows into Grayscale's Ethereum Mini Trust and Fidelity's FETH successfully offset redemptions elsewhere, halting consecutive days of heavy institutional selling.\n\n`
+    if ((ethIntel.netFlowUsd ?? 0) >= 0) {
+      commentaryText +=
+        `Crucially, Ethereum spot ETFs added ${formatFlowM(ethIntel.netFlowUsd)}, ${ethIntel.streakHook}. ` +
+        `Positive flows into Grayscale's Ethereum Mini Trust and Fidelity's FETH successfully offset redemptions elsewhere, halting consecutive days of institutional selling.\n\n`
+    } else {
+      commentaryText +=
+        `Meanwhile, Ethereum spot ETFs shed ${formatFlowM(ethIntel.netFlowUsd)}, ${ethIntel.streakHook}, reflecting sustained profit-taking across second-largest crypto spot products.\n\n`
+    }
   }
 
   if (evaluation.flatAssets.includes('SOL') || evaluation.flatAssets.includes('HYPE')) {
@@ -517,12 +548,22 @@ export function buildEtfSocialDraft(
       `• Cross-Asset Divergence: Capital allocation favored ${evaluation.inflowAssets.join('/')} while ${evaluation.outflowAssets.join('/')} faced headwinds, confirming asset-specific institutional rotation rather than generic market beta.\n`
   }
   if (btcIntel?.isMilestone) {
-    implicationsText +=
-      `• Structural BTC Demand: Recording ${btcIntel.milestoneHook} provides strong price structure support and signals robust institutional accumulation regardless of short-term derivative volatility.\n`
+    if ((btcIntel.netFlowUsd ?? 0) >= 0) {
+      implicationsText +=
+        `• Structural BTC Demand: Persistent spot absorption provides strong price structure support and signals robust institutional accumulation regardless of short-term derivative volatility.\n`
+    } else {
+      implicationsText +=
+        `• Institutional BTC De-risking: Elevated spot ETF redemptions signal tactical profit-taking and caution among macro desks near key market levels.\n`
+    }
   }
   if (ethIntel?.isStreakBreaker) {
-    implicationsText +=
-      `• ETH Sentiment Relief: Snapping the ${ethIntel.priorStreakCount}-day outflow streak relieves sustained spot selling pressure and marks a pivotal technical baseline for Ethereum spot products.\n`
+    if ((ethIntel.netFlowUsd ?? 0) >= 0) {
+      implicationsText +=
+        `• ETH Flow Reversal: Snapping the ${ethIntel.priorStreakCount}-day outflow streak relieves sustained spot selling pressure and marks a pivotal technical baseline for Ethereum spot products.\n`
+    } else {
+      implicationsText +=
+        `• ETH Sentiment Pause: Halting the prior positive flow streak indicates near-term institutional consolidation across Ethereum products.\n`
+    }
   }
   if (evaluation.topFundInflows.length > 0) {
     const topFund = evaluation.topFundInflows[0]
@@ -531,7 +572,8 @@ export function buildEtfSocialDraft(
   }
 
   // ── 8. Assemble Full Clean Article ──────────────────────────────────────────
-  const fullArticle = `${tweetText}\n\n${highFlowsText}\n${fundBreakdownText}${commentaryText}${implicationsText}\nIntelligence compiled by Sumex Market Intelligence Platform`
+  const rawArticle = `${tweetText}\n\n${highFlowsText}\n${fundBreakdownText}${commentaryText}${implicationsText}\nIntelligence compiled by Sumex Market Intelligence Platform`
+  const fullArticle = deduplicateDraftContent(rawArticle)
 
   return {
     title: stripMarkdown(draftTitle),
@@ -540,6 +582,7 @@ export function buildEtfSocialDraft(
     fullArticle: stripMarkdown(fullArticle),
   }
 }
+
 
 /**
  * Call Gemini AI to polish and enrich draft while guaranteeing 100% clean plain text
@@ -562,19 +605,24 @@ ${fullArticle}
 
 Review and polish this draft into a concise, institutional-grade market intelligence report ready for immediate executive publication and social distribution.
 
-CRITICAL FORMATTING INSTRUCTIONS:
+CRITICAL FORMATTING & DEDUPLICATION INSTRUCTIONS:
 1. OUTPUT 100% CLEAN PLAIN TEXT. DO NOT USE ANY MARKDOWN TAGS:
    - NO bold asterisks (**bold**). Write words plainly.
    - NO header hashes (### Header or ## Header). Write plain section headers with a colon (e.g. '📈 Market Commentary & Catalysts:').
    - NO italic asterisks (*italic*).
    - Use clean bullet points (•) for bulleted lists.
-2. PRESERVE THE EXACT LEAD HOOK, FLASH POST, AND EXACT NUMBERS:
+2. PRESERVE THE EXACT LEAD HOOK, FLASH POST, AND EXACT NUMBERS WITHOUT ANY MODIFICATION:
 ${tweetText}
+   CRITICAL DATA INTEGRITY MANDATE: ALL NET FLOW FIGURES, ASSET TOTALS, AND COMBINED TOTALS (E.G. COMBINED BTC + ETH) ARE MATHEMATICALLY VERIFIED AND SOURCED DIRECTLY FROM FARSIDE INVESTORS. DO NOT ALTER, ROUND, ESTIMATE, OR RECALCULATE ANY MONETARY AMOUNTS OR TICKER FIGURES.
 3. PRESERVE THE '🏆 Top Fund Inflows:' and '🔻 Top Fund Outflows / Redemptions:' sections with exact numbers.
 4. PRESERVE THE '📊 Complete Fund-Level Breakdown by Asset:' section.
-5. Enrich the '📈 Market Commentary & Catalysts:' section with sharp macro analysis (150-200 words) connecting these flows to institutional positioning and price momentum.
-6. Keep '🎯 Institutional Intelligence & Market Implications:' crisp and actionable.
-7. Return ONLY the clean plain text.`
+5. STRICT CONTENT DEDUPLICATION MANDATE:
+   - DO NOT duplicate sentences or phrases that appear elsewhere in the report.
+   - Do NOT repeat the lead headline or bullet points inside the '📈 Market Commentary & Catalysts:' or '🎯 Institutional Intelligence & Market Implications:' sections.
+   - Each section must offer distinct, non-repetitive macro and market structure analysis.
+6. Enrich the '📈 Market Commentary & Catalysts:' section with sharp macro analysis (150-200 words) connecting these flows to institutional positioning and price momentum.
+7. Keep '🎯 Institutional Intelligence & Market Implications:' crisp and actionable.
+8. Return ONLY the clean plain text.`
 
   try {
     const res = await fetch(
@@ -597,15 +645,16 @@ ${tweetText}
       const data = await res.json()
       const aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim()
       if (aiText && aiText.length > 100) {
-        return stripMarkdown(aiText)
+        return deduplicateDraftContent(aiText)
       }
     }
   } catch (err) {
     console.warn('[etf-draft-service] AI enhancement failed, using structured template:', err)
   }
 
-  return stripMarkdown(fullArticle)
+  return deduplicateDraftContent(fullArticle)
 }
+
 
 /**
  * Auto-generate or update ETF Flow drafts for any recent trading days that are worth talking about
@@ -616,6 +665,7 @@ export async function autoGenerateEtfFlowDrafts(
     forceDate?: string
     maxDays?: number
     forceUpdateExisting?: boolean
+    afterDate?: string
   }
 ): Promise<{
   scannedDates: string[]
@@ -646,9 +696,13 @@ export async function autoGenerateEtfFlowDrafts(
   }
 
   const allSortedDates = Object.keys(byDate).sort((a, b) => b.localeCompare(a))
+  const eligibleDates = options?.afterDate
+    ? allSortedDates.filter((d) => d >= options.afterDate!.substring(0, 10))
+    : allSortedDates
+
   const targetDates = options?.forceDate
     ? [options.forceDate]
-    : allSortedDates.slice(0, maxDays)
+    : eligibleDates.slice(0, maxDays)
 
   const createdDrafts: Record<string, unknown>[] = []
   const skippedDates: string[] = []
@@ -678,15 +732,40 @@ export async function autoGenerateEtfFlowDrafts(
       continue
     }
 
-    // 4. Check for existing draft for this date
-    const datePattern = formatDateLabel(date)
-    const { data: existingDrafts } = await supabase
-      .from('content_drafts')
-      .select('id, title, created_at')
-      .or(`title.ilike.%${date}%,title.ilike.%${datePattern}%,body.ilike.%${date}%`)
-      .limit(1)
+    // 4. Find linked Signal & Research Card
+    const datePattern = formatDateLabel(date) // e.g. "Oct. 22"
+    const rawMonthDay = datePattern.replace('.', '') // e.g. "Oct 22"
 
-    const existingDraft = existingDrafts?.[0]
+    const { data: existingCards } = await supabase
+      .from('research_cards')
+      .select('id, observation, etf_context')
+      .order('created_at', { ascending: false })
+      .limit(40)
+
+    const matchingCard = existingCards?.find((c) => {
+      const obs = c.observation ?? ''
+      const ctxDate = (c.etf_context as Record<string, unknown> | null)?.date
+      return ctxDate === date || obs.includes(date) || obs.includes(datePattern) || obs.includes(rawMonthDay)
+    })
+
+    const matchingCardId = matchingCard?.id
+
+    // Check for existing draft for this date or linked research card
+    const { data: recentDrafts } = await supabase
+      .from('content_drafts')
+      .select('id, title, body, research_id, created_at')
+      .order('created_at', { ascending: false })
+      .limit(150)
+
+    const existingDraft = (recentDrafts ?? []).find((d) => {
+      if (matchingCardId && d.research_id === matchingCardId) return true
+      const fullText = `${d.title} ${d.body || ''}`
+      return (
+        fullText.includes(date) ||
+        fullText.includes(datePattern) ||
+        fullText.includes(rawMonthDay)
+      )
+    })
 
     if (existingDraft && !options?.forceDate && !options?.forceUpdateExisting) {
       // Already generated and update not forced
@@ -710,45 +789,47 @@ export async function autoGenerateEtfFlowDrafts(
     const cleanTitle = stripMarkdown(title)
     const cleanBody = stripMarkdown(finalBody)
 
-    // 7. Find or create linked Signal & Research Card
-    let researchId: string | null = null
+    // 7. Resolve researchId
+    let researchId: string | null = matchingCardId ?? null
 
-    const { data: existingCards } = await supabase
-      .from('research_cards')
-      .select('id, observation, etf_context')
-      .order('created_at', { ascending: false })
-      .limit(10)
-
-    const matchingCard = existingCards?.find((c) => {
-      const obs = c.observation ?? ''
-      const ctxDate = (c.etf_context as Record<string, unknown> | null)?.date
-      return ctxDate === date || obs.includes(date) || obs.includes(datePattern)
-    })
-
-    if (matchingCard) {
-      researchId = matchingCard.id
-    } else {
-      const { data: newSignal } = await supabase
+    if (!researchId) {
+      // Check if signal exists before inserting
+      const { data: existingSignals } = await supabase
         .from('signals')
-        .insert({
-          signal_type: 'etf_flow',
-          subject: evaluation.topInflowAsset?.asset ?? evaluation.topOutflowAsset?.asset ?? 'ALL',
-          title: cleanTitle,
-          severity: Math.abs(evaluation.totalNetFlowUsd / 1_000_000) >= 100 ? 'high' : 'medium',
-          score: 8,
-          trigger_detail: evaluation.reasons.join(' | ') || `ETF flows recorded for ${date}`,
-          evidence_summary: `Total Net Flow: ${formatFlowM(evaluation.totalNetFlowUsd)} across reporting funds`,
-          status: 'content_ready',
-          is_duplicate: false,
-        })
-        .select('id')
-        .single()
+        .select('id, title, trigger_detail')
+        .eq('signal_type', 'etf_flow')
+        .order('created_at', { ascending: false })
+        .limit(20)
 
-      if (newSignal?.id) {
+      let signalId = existingSignals?.find(
+        (s) => s.trigger_detail?.includes(date) || s.title?.includes(datePattern) || s.title?.includes(rawMonthDay)
+      )?.id
+
+      if (!signalId) {
+        const { data: newSignal } = await supabase
+          .from('signals')
+          .insert({
+            signal_type: 'etf_flow',
+            subject: evaluation.topInflowAsset?.asset ?? evaluation.topOutflowAsset?.asset ?? 'ALL',
+            title: cleanTitle,
+            severity: Math.abs(evaluation.totalNetFlowUsd / 1_000_000) >= 100 ? 'high' : 'medium',
+            score: 8,
+            trigger_detail: evaluation.reasons.join(' | ') || `ETF flows recorded for ${date}`,
+            evidence_summary: `Total Net Flow: ${formatFlowM(evaluation.totalNetFlowUsd)} across reporting funds`,
+            status: 'content_ready',
+            is_duplicate: false,
+          })
+          .select('id')
+          .single()
+
+        signalId = newSignal?.id
+      }
+
+      if (signalId) {
         const { data: newCard } = await supabase
           .from('research_cards')
           .insert({
-            signal_id: newSignal.id,
+            signal_id: signalId,
             observation: cleanTitle,
             question: `What is driving the ETF flow dynamics on ${date} and what does it signal for market structure?`,
             verified_facts: dayTotals.map((t) => ({
@@ -795,7 +876,23 @@ export async function autoGenerateEtfFlowDrafts(
       } else if (updatedDraft) {
         createdDrafts.push(updatedDraft)
       }
+    } else if (existingDraft) {
+      skippedDates.push(date)
+      continue
     } else {
+      // Direct secondary guard against duplicates
+      const { data: duplicateCheck } = await supabase
+        .from('content_drafts')
+        .select('id')
+        .or(`title.ilike.%${date}%,title.ilike.%${datePattern}%,title.ilike.%${rawMonthDay}%`)
+        .limit(1)
+        .maybeSingle()
+
+      if (duplicateCheck) {
+        skippedDates.push(date)
+        continue
+      }
+
       const { data: newDraft, error: insertError } = await supabase
         .from('content_drafts')
         .insert({
