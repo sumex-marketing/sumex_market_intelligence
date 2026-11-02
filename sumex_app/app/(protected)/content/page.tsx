@@ -1,7 +1,4 @@
-import Link from 'next/link'
-import { createClient, createServiceClient } from '@/lib/supabase/server'
-import { checkAndDraftAllPending } from '@/lib/services/draft-scanner-service'
-import { Edit3 } from 'lucide-react'
+import { createClient } from '@/lib/supabase/server'
 import ContentDraftList from './ContentDraftList'
 
 export const dynamic = 'force-dynamic'
@@ -9,13 +6,9 @@ export const dynamic = 'force-dynamic'
 export default async function ContentPage() {
   const supabase = await createClient()
 
-  // Auto-populate any pending ETF flows or high-conviction signals automatically on page load
-  try {
-    const serviceClient = createServiceClient()
-    await checkAndDraftAllPending(serviceClient, { maxEtfDays: 7, minSignalScore: 6.5 })
-  } catch (err) {
-    console.warn('[content/page] Auto-population check notice:', err)
-  }
+  // NOTE: Auto-draft generation is handled by the cron job (fetch-etf-flows, detect-signals).
+  // We do NOT run checkAndDraftAllPending here to prevent deleted drafts from
+  // being resurrected on every page refresh. Use the manual "Scan & Draft" button instead.
 
   const { data: drafts } = await supabase
     .from('content_drafts')

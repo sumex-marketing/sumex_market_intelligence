@@ -387,6 +387,35 @@ export default function ResearchCardList({ initialCards }: { initialCards: Resea
     }
   }
 
+  // ── Generate Research Cards from Signals ──────────────────────────────────
+  const [generatingCards, setGeneratingCards] = useState(false)
+
+  const handleGenerateCards = async () => {
+    setGeneratingCards(true)
+    setNotice(null)
+    try {
+      const res = await fetch('/api/research/generate-cards', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ minScore: 6.0 }),
+      })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        setNotice({
+          type: 'success',
+          message: data.message ?? `Generated ${data.created} research card(s).`,
+        })
+        if (data.created > 0) router.refresh()
+      } else {
+        setNotice({ type: 'error', message: data.error ?? 'Failed to generate research cards.' })
+      }
+    } catch {
+      setNotice({ type: 'error', message: 'Network error generating research cards.' })
+    } finally {
+      setGeneratingCards(false)
+    }
+  }
+
   const isFiltered = searchQuery.trim() !== '' || statusFilter !== 'ALL' || assetFilter !== 'ALL'
 
   // Helper for asset badge styling
@@ -459,6 +488,24 @@ export default function ResearchCardList({ initialCards }: { initialCards: Resea
               )}
             </button>
           )}
+
+          {/* Generate Research Cards from Signals Button */}
+          <button
+            onClick={handleGenerateCards}
+            disabled={generatingCards || deletingAll}
+            className="btn btn-sm"
+            title="Scan high-conviction signals and auto-generate research cards for any that don't have one yet"
+            style={{
+              gap: 6,
+              background: 'linear-gradient(135deg, rgba(35,247,221,0.12) 0%, rgba(142,51,255,0.12) 100%)',
+              borderColor: 'rgba(35,247,221,0.4)',
+              color: '#23F7DD',
+              fontWeight: 700,
+            }}
+          >
+            {generatingCards ? <RefreshCw size={13} className="spin" /> : <Sparkles size={13} />}
+            <span>{generatingCards ? 'Generating Cards...' : '⚡ Generate Research Cards'}</span>
+          </button>
 
           {/* New Research Card Button */}
           <Link href="/research/new" className="btn btn-primary btn-sm" style={{ gap: 6 }}>

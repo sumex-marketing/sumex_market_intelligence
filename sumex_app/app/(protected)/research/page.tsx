@@ -1,12 +1,14 @@
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { Plus, FileText } from 'lucide-react'
 import ResearchCardList from './ResearchCardList'
 
 export const dynamic = 'force-dynamic'
 
 export default async function ResearchPage() {
   const supabase = await createClient()
+
+  // NOTE: Research card auto-generation is triggered manually via the "Generate Cards"
+  // button in the UI, or by the cron job. We do NOT auto-generate here to prevent
+  // deleted cards from being resurrected on every page refresh.
 
   const { data: cards } = await supabase
     .from('research_cards')
