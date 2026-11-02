@@ -87,6 +87,14 @@ export function getFundDisplayName(ticker: string, asset: 'BTC' | 'ETH' | 'SOL' 
   return `${t} ${asset} Spot ETP`
 }
 
+/**
+ * Returns today's date in YYYY-MM-DD in US/Eastern time.
+ * ETF flow data is published in ET; we use this to detect if today's data is live.
+ */
+function getTodayEt(): string {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
+}
+
 export function parseFlowUsd(str: string | null | undefined): number | null {
   if (!str) return null
   const clean = str.replace(/,/g, '').trim()
@@ -117,13 +125,18 @@ export async function scrapeFarsideEtfFlows(
       : 'hyp'
 
   // Primary Method: Free Cloudflare-Bypassing Headless Proxy (Jina AI Reader)
+  // Timeout raised to 25s — Farside pages can be slow but contain today's data when available.
   try {
     const proxyUrl = `https://r.jina.ai/https://farside.co.uk/${path}/`
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 12000)
+    const timeoutId = setTimeout(() => controller.abort(), 25000)
 
     const proxyRes = await fetch(proxyUrl, {
-      headers: { Accept: 'text/plain' },
+      headers: {
+        Accept: 'text/plain',
+        'X-No-Cache': 'true',           // Ask Jina not to serve a cached copy
+        'X-With-Shadow-Dom': 'true',    // Ensure full page content is rendered
+      },
       signal: controller.signal,
       next: { revalidate: 0 },
     })
@@ -133,6 +146,14 @@ export async function scrapeFarsideEtfFlows(
       const markdown = await proxyRes.text()
       const parsedFlows = parseFarsideMarkdown(markdown, asset)
       if (parsedFlows.length > 0) {
+        // Check how fresh the data is — log a warning if today is missing
+        const today = getTodayEt()
+        const latestDate = parsedFlows.reduce((max, f) => (f.date > max ? f.date : max), '')
+        if (latestDate < today) {
+          console.warn(`[farside-scraper] ${asset} latest data is ${latestDate}, today is ${today} — data may not be published yet`)
+        } else {
+          console.log(`[farside-scraper] ${asset} fresh data confirmed for ${latestDate}`)
+        }
         return { data: parsedFlows, status: 200, error: null }
       }
     }

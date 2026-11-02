@@ -61,6 +61,16 @@ async function handleEtfSync(request: Request) {
       })
     }
 
+    // Compute freshness: what is the latest date we got across all assets?
+    const todayEt = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
+    const latestDateInBatch = allFlows.reduce((max, f) => (f.date > max ? f.date : max), '')
+    const isStale = latestDateInBatch < todayEt
+    if (isStale) {
+      console.warn(`[fetch-etf-flows] Latest data is ${latestDateInBatch}, today is ${todayEt}. Farside may not have published yet.`)
+    } else {
+      console.log(`[fetch-etf-flows] Fresh data confirmed for ${latestDateInBatch}`)
+    }
+
     if (job?.id) {
       await supabase
         .from('job_runs')
@@ -102,6 +112,8 @@ async function handleEtfSync(request: Request) {
     return NextResponse.json({
       success: true,
       records: allFlows.length,
+      latest_date: latestDateInBatch,
+      is_stale: isStale,
       auto_drafts_created: autoDraftsCreated,
     })
   } catch (err: any) {
